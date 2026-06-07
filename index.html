@@ -51,15 +51,18 @@
             margin-bottom: 20px;
         }
 
-        .filter-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 20px;
+        .section-box {
             background: #fff0f3;
             padding: 12px;
             border-radius: 10px;
             border: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+
+        .section-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            color: #d65a78;
         }
 
         .filter-section label {
@@ -68,7 +71,7 @@
             color: #d65a78;
         }
 
-        .filter-section select {
+        .filter-section select, .manage-categories-box select {
             width: 100%;
             padding: 10px;
             border-radius: 8px;
@@ -80,6 +83,20 @@
             cursor: pointer;
         }
 
+        /* إدارة التصنيفات */
+        .category-manager {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        .category-manager input {
+            flex: 2;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
         /* قسم إضافة مهمة جديدة */
         .add-task-box {
             display: flex;
@@ -89,6 +106,7 @@
             padding: 10px;
             border: 1px dashed var(--primary);
             border-radius: 10px;
+            align-items: center;
         }
 
         .add-task-box select, .add-task-box input {
@@ -211,15 +229,23 @@
 
 <div class="container">
     <h1>✨ لوحة جدول عنايتي الشخصية ✨</h1>
-    <p class="subtitle">سجلي مهامكِ الخاصة بنفسكِ لكل يوم وتتبعي إنجازاتكِ</p>
+    <p class="subtitle">My Care Routine: مساحتك الذكية لتنظيم روتينك، تتبع توهجك اليومي، والالتزام بأهدافك بخطوات بسيطة وبدون تشتت! ✨</p>
 
     <div class="notification-bar">
         <button id="notiBtn" onclick="requestPermission()" style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">تفعيل التنبيهات اليومية 🔔</button>
     </div>
 
-    <div class="filter-section">
-        <label for="daySelect">استعراض وإدارة مهام يوم:</label>
-        <select id="daySelect" onchange="changeDayFilter(this.value)">
+    <div class="section-box">
+        <h3>🛠️ إدارة أقسام العناية (الصباحية، المسائية... إلخ):</h3>
+        <div class="category-manager">
+            <input type="text" id="newCatInput" placeholder="اكتبي اسم قسم جديد (مثال: العناية بالجسم)...">
+            <button onclick="addNewCategory()" style="background: #4caf50; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">＋ إضافة قسم</button>
+        </div>
+    </div>
+
+    <div class="filter-section section-box" style="background: #fffafb;">
+        <label for="daySelect">📅 استعراض وإدارة مهام يوم:</label>
+        <select id="daySelect" onchange="changeDayFilter(this.value)" style="margin-top:5px;">
             <option value="السبت">السبت</option>
             <option value="الأحد">الأحد</option>
             <option value="الإثنين">الإثنين</option>
@@ -231,21 +257,17 @@
     </div>
 
     <div class="add-task-box">
-        <select id="newCat">
-            <option value="العناية الصباحية">الصباحية</option>
-            <option value="العناية بالشعر">الشعر</option>
-            <option value="العناية المسائية">المسائية</option>
-            <option value="الرياضية">الرياضية</option>
-        </select>
+        <select id="newCatSelect">
+            </select>
         <input type="text" id="newContent" placeholder="اكتبي روتين جديد هنا...">
-        <button onclick="addNewRoutine()" style="background: var(--primary); color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">＋ إضافة</button>
+        <button onclick="addNewRoutine()" style="background: var(--primary); color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">＋ إضافة مهمة</button>
     </div>
 
     <div id="schedule"></div>
 </div>
 
 <script>
-    // جدول فارغ تماماً يبدأ من السبت وينتهي بالجمعة ليسجل المستخدم مهامه بنفسه
+    // الأيام من السبت إلى الجمعة
     const emptyCareData = [
         { day: "السبت", routines: [] },
         { day: "الأحد", routines: [] },
@@ -256,17 +278,55 @@
         { day: "الجمعة", routines: [] }
     ];
 
-    // تحميل جدول المهام من ذاكرة المتصفح أو البدء بالجدول الفارغ المرتب
+    // الأقسام الافتراضية الأربعة
+    const defaultCategories = ["العناية الصباحية", "العناية بالشعر", "العناية المسائية", "الالرياضية"];
+
+    // تحميل البيانات من الذاكرة المحلية
     let careData = JSON.parse(localStorage.getItem('myCustomCareData')) || emptyCareData;
-    // تحميل حالة الإنجاز والأسباب
+    let categories = JSON.parse(localStorage.getItem('myCareCategories')) || defaultCategories;
     let userProgress = JSON.parse(localStorage.getItem('userCareProgress_2026')) || {};
     let selectedDay = "";
 
     document.addEventListener('DOMContentLoaded', () => {
+        updateCategorySelect();
         setInitialDay();
         checkNotificationStatus();
         setupDailyCheck();
     });
+
+    // تحديث قائمة الأقسام المنسدلة في واجهة الإضافة
+    function updateCategorySelect() {
+        const select = document.getElementById('newCatSelect');
+        select.innerHTML = '';
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.innerText = cat.replace("العناية ", ""); // اختصار لطيف للواجهة
+            select.appendChild(opt);
+        });
+    }
+
+    // إضافة قسم/تصنيف جديد تماماً
+    function addNewCategory() {
+        const input = document.getElementById('newCatInput');
+        const catName = input.value.trim();
+
+        if (!catName) {
+            alert("الرجاء كتابة اسم القسم أولاً!");
+            return;
+        }
+
+        if (categories.includes(catName)) {
+            alert("هذا القسم موجود بالفعل!");
+            return;
+        }
+
+        categories.push(catName);
+        localStorage.setItem('myCareCategories', JSON.stringify(categories));
+        updateCategorySelect();
+        input.value = '';
+        alert(`تم إضافة قسم "${catName}" بنجاح! يمكنك الآن اختيارها عند إضافة المهام.`);
+    }
 
     // تحديد اليوم الحالي تلقائياً بناءً على تاريخ الجهاز عند الفتح
     function setInitialDay() {
@@ -340,7 +400,7 @@
 
     // إضافة مهمة مخصصة جديدة لليوم الحالي
     function addNewRoutine() {
-        const catInput = document.getElementById('newCat').value;
+        const catSelect = document.getElementById('newCatSelect').value;
         const contentInput = document.getElementById('newContent').value.trim();
 
         if(!contentInput) {
@@ -349,14 +409,13 @@
         }
 
         const dayIdx = careData.findIndex(d => d.day === selectedDay);
-        careData[dayIdx].routines.push({ cat: catInput, content: contentInput });
+        careData[dayIdx].routines.push({ cat: catSelect, content: contentInput });
 
         saveAllData();
         renderSchedule();
         document.getElementById('newContent').value = ''; 
     }
 
-    // تعديل نص مهمة موجودة
     function editRoutine(dayIdx, rIdx) {
         const currentContent = careData[dayIdx].routines[rIdx].content;
         const newContent = prompt("عدلي نص المهمة:", currentContent);
@@ -368,7 +427,6 @@
         }
     }
 
-    // حذف مهمة
     function deleteRoutine(dayIdx, rIdx) {
         if(confirm("هل أنتِ متأكدة من حذف هذه المهمة؟")) {
             careData[dayIdx].routines.splice(rIdx, 1);
@@ -377,7 +435,6 @@
         }
     }
 
-    // الحفظ في ذاكرة المتصفح
     function saveAllData() {
         localStorage.setItem('myCustomCareData', JSON.stringify(careData));
     }
