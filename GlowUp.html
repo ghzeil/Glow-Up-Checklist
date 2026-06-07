@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة عنايتي الشخصية</title>
+    <style>
+        :root {
+            --primary: #ff85a2;
+            --primary-hover: #f17390;
+            --success: #4caf50;
+            --danger: #f44336;
+            --bg: #fff5f7;
+            --card-bg: #ffffff;
+            --text: #4a4a4a;
+            --border: #f0d5da;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 650px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(255, 133, 162, 0.15);
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #a07883;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: #fff0f3;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .filter-section label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #d65a78;
+        }
+
+        .filter-section select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text);
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* قسم إضافة مهمة جديدة */
+        .add-task-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            background: #fffafb;
+            padding: 10px;
+            border: 1px dashed var(--primary);
+            border-radius: 10px;
+        }
+
+        .add-task-box select, .add-task-box input {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .add-task-box input { flex: 2; }
+        .add-task-box select { flex: 1; }
+
+        .day-section {
+            background: #fffcfd;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .day-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .routines-container {
+            padding: 10px;
+        }
+
+        .routine-row {
+            display: flex;
+            flex-direction: column;
+            padding: 15px 10px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .routine-row:last-child {
+            border-bottom: none;
+        }
+
+        .routine-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .category-name {
+            font-weight: bold;
+            color: #d65a78;
+            font-size: 12px;
+            background: #ffebee;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .content-text {
+            flex: 1;
+            font-size: 15px;
+            color: #555;
+            line-height: 1.4;
+            min-width: 150px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.2s;
+            background: #eee;
+            color: #666;
+        }
+
+        .btn-check.active { background-color: var(--success); color: white; }
+        .btn-cross.active { background-color: var(--danger); color: white; }
+
+        .btn-edit { background-color: #ffe0b2; color: #e65100; }
+        .btn-delete { background-color: #ffcdd2; color: #b71c1c; }
+
+        .reason-area {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .reason-area input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ffccd5;
+            border-radius: 6px;
+            background-color: #fff0f3;
+            font-size: 13px;
+        }
+
+        .notification-bar {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✨ لوحة جدول عنايتي الشخصية ✨</h1>
+    <p class="subtitle">سجلي مهامكِ الخاصة بنفسكِ لكل يوم وتتبعي إنجازاتكِ</p>
+
+    <div class="notification-bar">
+        <button id="notiBtn" onclick="requestPermission()" style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">تفعيل التنبيهات اليومية 🔔</button>
+    </div>
+
+    <div class="filter-section">
+        <label for="daySelect">استعراض وإدارة مهام يوم:</label>
+        <select id="daySelect" onchange="changeDayFilter(this.value)">
+            <option value="السبت">السبت</option>
+            <option value="الأحد">الأحد</option>
+            <option value="الإثنين">الإثنين</option>
+            <option value="الثلاثاء">الثلاثاء</option>
+            <option value="الأربعاء">الأربعاء</option>
+            <option value="الخميس">الخميس</option>
+            <option value="الجمعة">الجمعة</option>
+        </select>
+    </div>
+
+    <div class="add-task-box">
+        <select id="newCat">
+            <option value="العناية الصباحية">الصباحية</option>
+            <option value="العناية بالشعر">الشعر</option>
+            <option value="العناية المسائية">المسائية</option>
+            <option value="الرياضية">الرياضية</option>
+        </select>
+        <input type="text" id="newContent" placeholder="اكتبي روتين جديد هنا...">
+        <button onclick="addNewRoutine()" style="background: var(--primary); color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">＋ إضافة</button>
+    </div>
+
+    <div id="schedule"></div>
+</div>
+
+<script>
+    // جدول فارغ تماماً يبدأ من السبت وينتهي بالجمعة ليسجل المستخدم مهامه بنفسه
+    const emptyCareData = [
+        { day: "السبت", routines: [] },
+        { day: "الأحد", routines: [] },
+        { day: "الإثنين", routines: [] },
+        { day: "الثلاثاء", routines: [] },
+        { day: "الأربعاء", routines: [] },
+        { day: "الخميس", routines: [] },
+        { day: "الجمعة", routines: [] }
+    ];
+
+    // تحميل جدول المهام من ذاكرة المتصفح أو البدء بالجدول الفارغ المرتب
+    let careData = JSON.parse(localStorage.getItem('myCustomCareData')) || emptyCareData;
+    // تحميل حالة الإنجاز والأسباب
+    let userProgress = JSON.parse(localStorage.getItem('userCareProgress_2026')) || {};
+    let selectedDay = "";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setInitialDay();
+        checkNotificationStatus();
+        setupDailyCheck();
+    });
+
+    // تحديد اليوم الحالي تلقائياً بناءً على تاريخ الجهاز عند الفتح
+    function setInitialDay() {
+        const currentDayIndex = new Date().getDay(); 
+        const jsDays = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        const todayName = jsDays[currentDayIndex];
+        
+        selectedDay = todayName;
+        document.getElementById('daySelect').value = todayName;
+        renderSchedule();
+    }
+
+    function changeDayFilter(day) {
+        selectedDay = day;
+        renderSchedule();
+    }
+
+    // بناء وعرض الجدول
+    function renderSchedule() {
+        const scheduleDiv = document.getElementById('schedule');
+        scheduleDiv.innerHTML = '';
+
+        const dayIdx = careData.findIndex(d => d.day === selectedDay);
+        if (dayIdx === -1) return;
+
+        const dayData = careData[dayIdx];
+
+        const dayBox = document.createElement('div');
+        dayBox.className = 'day-section';
+        
+        let routinesHtml = '';
+        
+        if(dayData.routines.length === 0) {
+            routinesHtml = `<p style="text-align:center; color:#999; padding: 25px; font-size:14px;">لا توجد مهام مضافة ليوم (${selectedDay}) حتى الآن.<br>أضيفي روتينكِ الخاص باستخدام الصندوق في الأعلى! ✨</p>`;
+        }
+
+        dayData.routines.forEach((routine, rIdx) => {
+            const uniqueId = `${selectedDay}_${rIdx}`;
+            const currentStatus = userProgress[uniqueId]?.status || null;
+            const currentReason = userProgress[uniqueId]?.reason || '';
+
+            routinesHtml += `
+                <div class="routine-row">
+                    <div class="routine-info">
+                        <span class="category-name">${routine.cat}</span>
+                        <span class="content-text" id="text-display-${uniqueId}">${routine.content}</span>
+                        <div class="action-buttons">
+                            <button class="btn btn-check ${currentStatus === 'success' ? 'active' : ''}" onclick="toggleStatus('${uniqueId}', 'success')">✓ صح</button>
+                            <button class="btn btn-cross ${currentStatus === 'danger' ? 'active' : ''}" onclick="toggleStatus('${uniqueId}', 'danger')">✗ خطأ</button>
+                            <button class="btn btn-edit" onclick="editRoutine(${dayIdx}, ${rIdx})">تعديل</button>
+                            <button class="btn btn-delete" onclick="deleteRoutine(${dayIdx}, ${rIdx})">حذف</button>
+                        </div>
+                    </div>
+                    <div class="reason-area" id="reason-container-${uniqueId}" style="display: ${currentStatus === 'danger' ? 'block' : 'none'}">
+                        <input type="text" id="input-${uniqueId}" placeholder="اكتبي سبب عدم الإتمام هنا..." value="${currentReason}" onchange="saveReason('${uniqueId}', this.value)">
+                    </div>
+                </div>
+            `;
+        });
+
+        dayBox.innerHTML = `
+            <div class="day-header">
+                <span>📅 مهام يوم ${dayData.day}</span>
+            </div>
+            <div class="routines-container">
+                ${routinesHtml}
+            </div>
+        `;
+        scheduleDiv.appendChild(dayBox);
+    }
+
+    // إضافة مهمة مخصصة جديدة لليوم الحالي
+    function addNewRoutine() {
+        const catInput = document.getElementById('newCat').value;
+        const contentInput = document.getElementById('newContent').value.trim();
+
+        if(!contentInput) {
+            alert("الرجاء كتابة تفاصيل المهمة أولاً!");
+            return;
+        }
+
+        const dayIdx = careData.findIndex(d => d.day === selectedDay);
+        careData[dayIdx].routines.push({ cat: catInput, content: contentInput });
+
+        saveAllData();
+        renderSchedule();
+        document.getElementById('newContent').value = ''; 
+    }
+
+    // تعديل نص مهمة موجودة
+    function editRoutine(dayIdx, rIdx) {
+        const currentContent = careData[dayIdx].routines[rIdx].content;
+        const newContent = prompt("عدلي نص المهمة:", currentContent);
+        
+        if (newContent !== null && newContent.trim() !== "") {
+            careData[dayIdx].routines[rIdx].content = newContent.trim();
+            saveAllData();
+            renderSchedule();
+        }
+    }
+
+    // حذف مهمة
+    function deleteRoutine(dayIdx, rIdx) {
+        if(confirm("هل أنتِ متأكدة من حذف هذه المهمة؟")) {
+            careData[dayIdx].routines.splice(rIdx, 1);
+            saveAllData();
+            renderSchedule();
+        }
+    }
+
+    // الحفظ في ذاكرة المتصفح
+    function saveAllData() {
+        localStorage.setItem('myCustomCareData', JSON.stringify(careData));
+    }
+
+    function toggleStatus(id, type) {
+        if (!userProgress[id]) {
+            userProgress[id] = { status: null, reason: '' };
+        }
+        if (userProgress[id].status === type) {
+            userProgress[id].status = null;
+        } else {
+            userProgress[id].status = type;
+        }
+        if (userProgress[id].status !== 'danger') {
+            userProgress[id].reason = '';
+        }
+        localStorage.setItem('userCareProgress_2026', JSON.stringify(userProgress));
+        renderSchedule();
+    }
+
+    function saveReason(id, value) {
+        if (userProgress[id]) {
+            userProgress[id].reason = value;
+            localStorage.setItem('userCareProgress_2026', JSON.stringify(userProgress));
+        }
+    }
+
+    // التنبيهات وإذن المتصفح
+    function requestPermission() {
+        if ("Notification" in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    alert("تم تفعيل التنبيهات اليومية بنجاح! ✨");
+                    checkNotificationStatus();
+                }
+            });
+        }
+    }
+
+    function checkNotificationStatus() {
+        if ("Notification" in window && Notification.permission === "granted") {
+            document.getElementById('notiBtn').innerText = "🔔 التنبيهات نشطة اليوم";
+            document.getElementById('notiBtn').style.backgroundColor = "#4caf50";
+            document.getElementById('notiBtn').disabled = true;
+        }
+    }
+
+    function setupDailyCheck() {
+        setInterval(() => {
+            const now = new Date();
+            if ((now.getHours() === 10 || now.getHours() === 20) && now.getMinutes() === 0) {
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("🌸 وقت العناية! 🌸", {
+                        body: "تذكرتك اليومية للاطلاع على مهام عنايتك وإتمامها ✨",
+                        icon: "https://cdn-icons-png.flaticon.com/512/3063/3063822.png"
+                    });
+                }
+            }
+        }, 60000);
+    }
+</script>
+
+</body>
+</html>
