@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة عنايتي الشخصية</title>
+    <title>My Care Routine</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #ff85a2;
@@ -35,6 +36,7 @@
             border-radius: 20px;
             box-shadow: 0 4px 20px rgba(255, 133, 162, 0.15);
             box-sizing: border-box;
+            margin-bottom: 20px;
         }
 
         h1 {
@@ -49,52 +51,52 @@
             color: #a07883;
             font-size: 14px;
             margin-bottom: 20px;
+            line-height: 1.4;
         }
 
-        .section-box {
+        /* واجهة تسجيل الدخول */
+        .auth-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             background: #fff0f3;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .auth-box h3 { margin: 0 0 5px 0; color: #d65a78; font-size: 16px; }
+        .auth-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .auth-row input { flex: 1; min-width: 140px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+        
+        .user-logged-in {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            background: #e8f5e9;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: #fffafb;
             padding: 12px;
             border-radius: 10px;
             border: 1px solid var(--border);
-            margin-bottom: 15px;
         }
 
-        .section-box h3 {
-            margin: 0 0 10px 0;
-            font-size: 15px;
-            color: #d65a78;
-        }
-
-        .filter-section label {
-            font-size: 14px;
-            font-weight: bold;
-            color: #d65a78;
-        }
-
-        .filter-section select, .manage-categories-box select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            font-size: 15px;
-            font-family: inherit;
-            color: var(--text);
-            outline: none;
-            cursor: pointer;
-        }
-
-        /* إدارة التصنيفات */
-        .category-manager {
-            display: flex;
-            gap: 8px;
-            margin-top: 5px;
-        }
-        .category-manager input {
-            flex: 2;
-            padding: 8px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 13px;
+        .filter-section label { font-size: 14px; font-weight: bold; color: #d65a78; }
+        .filter-section select {
+            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+            font-size: 15px; font-family: inherit; color: var(--text); outline: none; cursor: pointer;
         }
 
         /* قسم إضافة مهمة جديدة */
@@ -107,121 +109,64 @@
             border: 1px dashed var(--primary);
             border-radius: 10px;
             align-items: center;
-        }
-
-        .add-task-box select, .add-task-box input {
-            padding: 8px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 13px;
-        }
-        .add-task-box input { flex: 2; }
-        .add-task-box select { flex: 1; }
-
-        .day-section {
-            background: #fffcfd;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-
-        .day-header {
-            background-color: var(--primary);
-            color: white;
-            padding: 12px 15px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .routines-container {
-            padding: 10px;
-        }
-
-        .routine-row {
-            display: flex;
-            flex-direction: column;
-            padding: 15px 10px;
-            border-bottom: 1px dashed var(--border);
-        }
-
-        .routine-row:last-child {
-            border-bottom: none;
-        }
-
-        .routine-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
             flex-wrap: wrap;
         }
 
-        .category-name {
-            font-weight: bold;
-            color: #d65a78;
-            font-size: 12px;
-            background: #ffebee;
-            padding: 3px 8px;
-            border-radius: 20px;
+        .add-task-box select, .add-task-box input {
+            padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit;
+        }
+        .add-task-box input { flex: 2; min-width: 180px; }
+        .add-task-box select { flex: 1; min-width: 120px; }
+
+        /* حل مشكلة تداخل النصوص الطويلة */
+        .day-section {
+            background: #fffcfd; border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
-        .content-text {
-            flex: 1;
-            font-size: 15px;
-            color: #555;
-            line-height: 1.4;
-            min-width: 150px;
+        .day-header { background-color: var(--primary); color: white; padding: 12px 15px; font-size: 18px; font-weight: bold; }
+        .routines-container { padding: 5px 10px; }
+
+        .routine-row {
+            display: flex; flex-direction: column; padding: 15px 5px; border-bottom: 1px dashed var(--border);
         }
+        .routine-row:last-child { border-bottom: none; }
+
+        /* تعديل توزيع العناصر لمنع التداخل */
+        .routine-info {
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;
+        }
+
+        .routine-text-block {
+            display: flex; flex-direction: column; gap: 6px; flex: 1; word-break: break-word; min-width: 0;
+        }
+
+        .category-tag-container { display: flex; }
+        .category-name {
+            font-weight: bold; color: #d65a78; font-size: 11px; background: #ffebee; padding: 3px 8px; border-radius: 20px; white-space: nowrap;
+        }
+
+        .content-text { font-size: 15px; color: #444; line-height: 1.5; margin: 0; word-wrap: break-word; }
 
         .action-buttons {
-            display: flex;
-            gap: 5px;
-            align-items: center;
+            display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 240px;
         }
 
         .btn {
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 13px;
-            transition: 0.2s;
-            background: #eee;
-            color: #666;
+            border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.2s; background: #eee; color: #666; font-family: inherit;
         }
-
         .btn-check.active { background-color: var(--success); color: white; }
         .btn-cross.active { background-color: var(--danger); color: white; }
-
         .btn-edit { background-color: #ffe0b2; color: #e65100; }
         .btn-delete { background-color: #ffcdd2; color: #b71c1c; }
 
-        .reason-area {
-            display: none;
-            margin-top: 10px;
-        }
-
+        .reason-area { display: none; margin-top: 10px; }
         .reason-area input {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid #ffccd5;
-            border-radius: 6px;
-            background-color: #fff0f3;
-            font-size: 13px;
+            width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ffccd5; border-radius: 6px; background-color: #fff0f3; font-size: 13px; font-family: inherit;
         }
 
         .notification-bar {
-            background: #fff;
-            border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box;
+            background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 10px; margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box;
         }
     </style>
 </head>
@@ -231,21 +176,27 @@
     <h1>✨ لوحة جدول عنايتي الشخصية ✨</h1>
     <p class="subtitle">My Care Routine: مساحتك الذكية لتنظيم روتينك، تتبع توهجك اليومي، والالتزام بأهدافك بخطوات بسيطة وبدون تشتت! ✨</p>
 
+    <div id="authSection" class="auth-box">
+        <h3>🔐 المزامنة السحابية (لحفظ مهامكِ من أي جهاز):</h3>
+        <div class="auth-row">
+            <input type="email" id="authEmail" placeholder="البريد الإلكتروني...">
+            <input type="password" id="authPassword" placeholder="كلمة المرور...">
+            <button onclick="handleSignUp()" class="btn" style="background:#b3e5fc; color:#01579b;">إنشاء حساب</button>
+            <button onclick="handleLogin()" class="btn" style="background:var(--primary); color:white;">تسجيل دخول</button>
+        </div>
+    </div>
+    <div id="userInfoSection" class="user-logged-in">
+        <span id="userEmailDisplay">تم تسجيل الدخول بنجاح سحابياً 🌐</span>
+        <button onclick="handleLogout()" class="btn" style="padding:4px 8px; font-size:11px; background:#ffcdd2; color:#b71c1c;">تسجيل خروج</button>
+    </div>
+
     <div class="notification-bar">
         <button id="notiBtn" onclick="requestPermission()" style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">تفعيل التنبيهات اليومية 🔔</button>
     </div>
 
-    <div class="section-box">
-        <h3>🛠️ إدارة أقسام العناية (الصباحية، المسائية... إلخ):</h3>
-        <div class="category-manager">
-            <input type="text" id="newCatInput" placeholder="اكتبي اسم قسم جديد (مثال: العناية بالجسم)...">
-            <button onclick="addNewCategory()" style="background: #4caf50; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">＋ إضافة قسم</button>
-        </div>
-    </div>
-
-    <div class="filter-section section-box" style="background: #fffafb;">
+    <div class="filter-section">
         <label for="daySelect">📅 استعراض وإدارة مهام يوم:</label>
-        <select id="daySelect" onchange="changeDayFilter(this.value)" style="margin-top:5px;">
+        <select id="daySelect" onchange="changeDayFilter(this.value)">
             <option value="السبت">السبت</option>
             <option value="الأحد">الأحد</option>
             <option value="الإثنين">الإثنين</option>
@@ -257,83 +208,171 @@
     </div>
 
     <div class="add-task-box">
-        <select id="newCatSelect">
+        <select id="newCatSelect" onchange="checkCategorySelection(this.value)">
             </select>
         <input type="text" id="newContent" placeholder="اكتبي روتين جديد هنا...">
-        <button onclick="addNewRoutine()" style="background: var(--primary); color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">＋ إضافة مهمة</button>
+        <button onclick="addNewRoutine()" style="background: var(--primary); color:white; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-family:inherit;">＋ إضافة مهمة</button>
     </div>
 
     <div id="schedule"></div>
 </div>
 
 <script>
-    // الأيام من السبت إلى الجمعة
+    // تكوين السوبابيس (Supabase) لحفظ البيانات سحابياً
+    // تنبيه: للحصول على حفظ حقيقي، يفضل لاحقاً استبدال هذه القيم بقيم مشروعك الخاص من موقع supabase.com المتاحة مجاناً
+    const SUPABASE_URL = "https://your-project-url.supabase.co"; 
+    const SUPABASE_KEY = "your-anon-key";
+    const supabase = (SUPABASE_URL !== "https://your-project-url.supabase.co") ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
     const emptyCareData = [
-        { day: "السبت", routines: [] },
-        { day: "الأحد", routines: [] },
-        { day: "الإثنين", routines: [] },
-        { day: "الثلاثاء", routines: [] },
-        { day: "الأربعاء", routines: [] },
-        { day: "الخميس", routines: [] },
-        { day: "الجمعة", routines: [] }
+        { day: "السبت", routines: [] }, { day: "الأحد", routines: [] }, { day: "الإثنين", routines: [] },
+        { day: "الثلاثاء", routines: [] }, { day: "الأربعاء", routines: [] }, { day: "الخميس", routines: [] }, { day: "الجمعة", routines: [] }
     ];
 
-    // الأقسام الافتراضية الأربعة
-    const defaultCategories = ["العناية الصباحية", "العناية بالشعر", "العناية المسائية", "الالرياضية"];
+    const defaultCategories = ["العناية الصباحية", "العناية بالشعر", "العناية المسائية", "الرياضية"];
 
-    // تحميل البيانات من الذاكرة المحلية
     let careData = JSON.parse(localStorage.getItem('myCustomCareData')) || emptyCareData;
     let categories = JSON.parse(localStorage.getItem('myCareCategories')) || defaultCategories;
     let userProgress = JSON.parse(localStorage.getItem('userCareProgress_2026')) || {};
     let selectedDay = "";
+    let currentUser = null;
 
     document.addEventListener('DOMContentLoaded', () => {
+        initAuthCheck();
         updateCategorySelect();
         setInitialDay();
         checkNotificationStatus();
         setupDailyCheck();
     });
 
-    // تحديث قائمة الأقسام المنسدلة في واجهة الإضافة
-    function updateCategorySelect() {
-        const select = document.getElementById('newCatSelect');
-        select.innerHTML = '';
-        categories.forEach(cat => {
-            const opt = document.createElement('option');
-            opt.value = cat;
-            opt.innerText = cat.replace("العناية ", ""); // اختصار لطيف للواجهة
-            select.appendChild(opt);
+    // إدارة الحساب والمزامنة السحابية
+    function initAuthCheck() {
+        if (!supabase) return;
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            handleSessionChange(session);
+        });
+        supabase.auth.onAuthStateChange((_event, session) => {
+            handleSessionChange(session);
         });
     }
 
-    // إضافة قسم/تصنيف جديد تماماً
-    function addNewCategory() {
-        const input = document.getElementById('newCatInput');
-        const catName = input.value.trim();
-
-        if (!catName) {
-            alert("الرجاء كتابة اسم القسم أولاً!");
-            return;
+    function handleSessionChange(session) {
+        if (session) {
+            currentUser = session.user;
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('userInfoSection').style.display = 'flex';
+            document.getElementById('userEmailDisplay').innerText = `☁️ متصل سحابياً: ${currentUser.email}`;
+            pullDataFromCloud();
+        } else {
+            currentUser = null;
+            document.getElementById('authSection').style.display = 'flex';
+            document.getElementById('userInfoSection').style.display = 'none';
         }
-
-        if (categories.includes(catName)) {
-            alert("هذا القسم موجود بالفعل!");
-            return;
-        }
-
-        categories.push(catName);
-        localStorage.setItem('myCareCategories', JSON.stringify(categories));
-        updateCategorySelect();
-        input.value = '';
-        alert(`تم إضافة قسم "${catName}" بنجاح! يمكنك الآن اختيارها عند إضافة المهام.`);
     }
 
-    // تحديد اليوم الحالي تلقائياً بناءً على تاريخ الجهاز عند الفتح
+    async function handleSignUp() {
+        if (!supabase) { alert("الرجاء إعداد روابط Supabase أولاً لتفعيل التخزين السحابي!"); return; }
+        const email = document.getElementById('authEmail').value.trim();
+        const password = document.getElementById('authPassword').value;
+        if (!email || !password) { alert("أدخلي البريد والرقم السري أولاً!"); return; }
+        
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) alert("خطأ في إنشاء الحساب: " + error.message);
+        else alert("تم إنشاء الحساب بنجاح! افحصي بريدك لتأكيده التفعيل إذا تطلب الأمر.");
+    }
+
+    async function handleLogin() {
+        if (!supabase) { alert("الرجاء إعداد روابط Supabase أولاً لتفعيل التخزين السحابي!"); return; }
+        const email = document.getElementById('authEmail').value.trim();
+        const password = document.getElementById('authPassword').value;
+        
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) alert("فشل تسجيل الدخول: " + error.message);
+    }
+
+    async function handleLogout() {
+        if (supabase) await supabase.auth.signOut();
+        localStorage.removeItem('myCustomCareData');
+        localStorage.removeItem('userCareProgress_2026');
+        careData = emptyCareData;
+        userProgress = {};
+        renderSchedule();
+    }
+
+    // دفع البيانات للسحاب وحفظها
+    async function pushDataToCloud() {
+        if (!supabase || !currentUser) return;
+        await supabase.from('user_routines').upsert({
+            user_id: currentUser.id,
+            care_data: careData,
+            user_progress: userProgress,
+            categories: categories,
+            updated_at: new Date()
+        });
+    }
+
+    // جلب البيانات من السحاب عند الدخول من جهاز آخر
+    async function pullDataFromCloud() {
+        if (!supabase || !currentUser) return;
+        const { data, error } = await supabase.from('user_routines').select('*').eq('user_id', currentUser.id).single();
+        if (data && !error) {
+            careData = data.care_data || emptyCareData;
+            userProgress = data.user_progress || {};
+            categories = data.categories || defaultCategories;
+            localStorage.setItem('myCustomCareData', JSON.stringify(careData));
+            localStorage.setItem('userCareProgress_2026', JSON.stringify(userProgress));
+            localStorage.setItem('myCareCategories', JSON.stringify(categories));
+            updateCategorySelect();
+            renderSchedule();
+        }
+    }
+
+    // تحديث خيارات الأقسام وإدماج خيار "قسم آخر" ذكياً
+    function updateCategorySelect() {
+        const select = document.getElementById('newCatSelect');
+        select.innerHTML = '';
+        
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.innerText = cat.replace("العناية ", "");
+            select.appendChild(opt);
+        });
+
+        // خيار ذكي مدمج لإضافة قسم جديد بدون زحمة واجهات
+        const promptOpt = document.createElement('option');
+        promptOpt.value = "__NEW_CAT__";
+        promptOpt.innerText = "➕ قسم آخر...";
+        promptOpt.style.color = "#d65a78";
+        promptOpt.style.fontWeight = "bold";
+        select.appendChild(promptOpt);
+    }
+
+    function checkCategorySelection(value) {
+        if (value === "__NEW_CAT__") {
+            const newCatName = prompt("اكتبي اسم القسم الجديد المخصص (مثال: العناية بالجسم، الفيتامينات):");
+            if (newCatName && newCatName.trim() !== "") {
+                const trimmed = newCatName.trim();
+                if (!categories.includes(trimmed)) {
+                    categories.push(trimmed);
+                    localStorage.setItem('myCareCategories', JSON.stringify(categories));
+                    updateCategorySelect();
+                    document.getElementById('newCatSelect').value = trimmed;
+                    pushDataToCloud();
+                } else {
+                    alert("هذا القسم مضاف سابقاً بالفعل!");
+                    document.getElementById('newCatSelect').selectedIndex = 0;
+                }
+            } else {
+                document.getElementById('newCatSelect').selectedIndex = 0;
+            }
+        }
+    }
+
     function setInitialDay() {
         const currentDayIndex = new Date().getDay(); 
         const jsDays = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         const todayName = jsDays[currentDayIndex];
-        
         selectedDay = todayName;
         document.getElementById('daySelect').value = todayName;
         renderSchedule();
@@ -344,7 +383,6 @@
         renderSchedule();
     }
 
-    // بناء وعرض الجدول
     function renderSchedule() {
         const scheduleDiv = document.getElementById('schedule');
         scheduleDiv.innerHTML = '';
@@ -353,12 +391,10 @@
         if (dayIdx === -1) return;
 
         const dayData = careData[dayIdx];
-
         const dayBox = document.createElement('div');
         dayBox.className = 'day-section';
         
         let routinesHtml = '';
-        
         if(dayData.routines.length === 0) {
             routinesHtml = `<p style="text-align:center; color:#999; padding: 25px; font-size:14px;">لا توجد مهام مضافة ليوم (${selectedDay}) حتى الآن.<br>أضيفي روتينكِ الخاص باستخدام الصندوق في الأعلى! ✨</p>`;
         }
@@ -368,11 +404,16 @@
             const currentStatus = userProgress[uniqueId]?.status || null;
             const currentReason = userProgress[uniqueId]?.reason || '';
 
+            // واجهة مصلحة ومتجاوبة لتفادي تداخل النصوص الطويلة
             routinesHtml += `
                 <div class="routine-row">
                     <div class="routine-info">
-                        <span class="category-name">${routine.cat}</span>
-                        <span class="content-text" id="text-display-${uniqueId}">${routine.content}</span>
+                        <div class="routine-text-block">
+                            <div class="category-tag-container">
+                                <span class="category-name">${routine.cat}</span>
+                            </div>
+                            <p class="content-text">${routine.content}</p>
+                        </div>
                         <div class="action-buttons">
                             <button class="btn btn-check ${currentStatus === 'success' ? 'active' : ''}" onclick="toggleStatus('${uniqueId}', 'success')">✓ صح</button>
                             <button class="btn btn-cross ${currentStatus === 'danger' ? 'active' : ''}" onclick="toggleStatus('${uniqueId}', 'danger')">✗ خطأ</button>
@@ -388,23 +429,18 @@
         });
 
         dayBox.innerHTML = `
-            <div class="day-header">
-                <span>📅 مهام يوم ${dayData.day}</span>
-            </div>
-            <div class="routines-container">
-                ${routinesHtml}
-            </div>
+            <div class="day-header"><span>📅 مهام يوم ${dayData.day}</span></div>
+            <div class="routines-container">${routinesHtml}</div>
         `;
         scheduleDiv.appendChild(dayBox);
     }
 
-    // إضافة مهمة مخصصة جديدة لليوم الحالي
     function addNewRoutine() {
         const catSelect = document.getElementById('newCatSelect').value;
         const contentInput = document.getElementById('newContent').value.trim();
 
-        if(!contentInput) {
-            alert("الرجاء كتابة تفاصيل المهمة أولاً!");
+        if(!contentInput || catSelect === "__NEW_CAT__") {
+            alert("الرجاء كتابة تفاصيل المهمة وتحديد القسم!");
             return;
         }
 
@@ -419,7 +455,6 @@
     function editRoutine(dayIdx, rIdx) {
         const currentContent = careData[dayIdx].routines[rIdx].content;
         const newContent = prompt("عدلي نص المهمة:", currentContent);
-        
         if (newContent !== null && newContent.trim() !== "") {
             careData[dayIdx].routines[rIdx].content = newContent.trim();
             saveAllData();
@@ -437,21 +472,15 @@
 
     function saveAllData() {
         localStorage.setItem('myCustomCareData', JSON.stringify(careData));
+        pushDataToCloud();
     }
 
     function toggleStatus(id, type) {
-        if (!userProgress[id]) {
-            userProgress[id] = { status: null, reason: '' };
-        }
-        if (userProgress[id].status === type) {
-            userProgress[id].status = null;
-        } else {
-            userProgress[id].status = type;
-        }
-        if (userProgress[id].status !== 'danger') {
-            userProgress[id].reason = '';
-        }
+        if (!userProgress[id]) userProgress[id] = { status: null, reason: '' };
+        userProgress[id].status = (userProgress[id].status === type) ? null : type;
+        if (userProgress[id].status !== 'danger') userProgress[id].reason = '';
         localStorage.setItem('userCareProgress_2026', JSON.stringify(userProgress));
+        pushDataToCloud();
         renderSchedule();
     }
 
@@ -459,17 +488,14 @@
         if (userProgress[id]) {
             userProgress[id].reason = value;
             localStorage.setItem('userCareProgress_2026', JSON.stringify(userProgress));
+            pushDataToCloud();
         }
     }
 
-    // التنبيهات وإذن المتصفح
     function requestPermission() {
         if ("Notification" in window) {
             Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    alert("تم تفعيل التنبيهات اليومية بنجاح! ✨");
-                    checkNotificationStatus();
-                }
+                if (permission === "granted") { checkNotificationStatus(); }
             });
         }
     }
@@ -487,10 +513,7 @@
             const now = new Date();
             if ((now.getHours() === 10 || now.getHours() === 20) && now.getMinutes() === 0) {
                 if ("Notification" in window && Notification.permission === "granted") {
-                    new Notification("🌸 وقت العناية! 🌸", {
-                        body: "تذكرتك اليومية للاطلاع على مهام عنايتك وإتمامها ✨",
-                        icon: "https://cdn-icons-png.flaticon.com/512/3063/3063822.png"
-                    });
+                    new Notification("🌸 وقت العناية! 🌸", { body: "تذكرتك اليومية للاطلاع على مهام عنايتك وإتمامها ✨" });
                 }
             }
         }, 60000);
