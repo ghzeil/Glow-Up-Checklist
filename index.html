@@ -54,7 +54,7 @@
             line-height: 1.4;
         }
 
-        /* واجهة الحساب */
+        /* واجهة تسجيل الدخول */
         .auth-box {
             display: flex;
             flex-direction: column;
@@ -118,7 +118,7 @@
         .add-task-box input { flex: 2; min-width: 180px; }
         .add-task-box select { flex: 1; min-width: 120px; }
 
-        /* التصميم المتجاوب للنصوص الطويلة */
+        /* حل مشكلة تداخل النصوص الطويلة */
         .day-section {
             background: #fffcfd; border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
@@ -132,6 +132,7 @@
         }
         .routine-row:last-child { border-bottom: none; }
 
+        /* تعديل توزيع العناصر لمنع التداخل */
         .routine-info {
             display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;
         }
@@ -176,7 +177,7 @@
     <p class="subtitle">My Care Routine: مساحتك الذكية لتنظيم روتينك، تتبع توهجك اليومي، والالتزام بأهدافك بخطوات بسيطة وبدون تشتت! ✨</p>
 
     <div id="authSection" class="auth-box">
-        <h3>🔐 المزامنة السحابية (اختياري - لحفظ مهامكِ من أي جهاز):</h3>
+        <h3>🔐 المزامنة السحابية (لحفظ مهامكِ من أي جهاز):</h3>
         <div class="auth-row">
             <input type="email" id="authEmail" placeholder="البريد الإلكتروني...">
             <input type="password" id="authPassword" placeholder="كلمة المرور...">
@@ -217,20 +218,18 @@
 </div>
 
 <script>
-    // تغيير الروابط الافتراضية لمنع تعليق أو خراب القائمة وتأمين عملها محلياً أولاً
+    // تكوين السوبابيس (Supabase) لحفظ البيانات سحابياً
+    // تنبيه: للحصول على حفظ حقيقي، يفضل لاحقاً استبدال هذه القيم بقيم مشروعك الخاص من موقع supabase.com المتاحة مجاناً
     const SUPABASE_URL = "https://your-project-url.supabase.co"; 
     const SUPABASE_KEY = "your-anon-key";
-    
-    // التحقق التلقائي والذكي لمنع الأعطال البرمجية
-    const isSupabaseConfigured = (SUPABASE_URL !== "https://your-project-url.supabase.co" && SUPABASE_KEY !== "your-anon-key");
-    const supabaseClient = isSupabaseConfigured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+    const supabase = (SUPABASE_URL !== "https://your-project-url.supabase.co") ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
     const emptyCareData = [
         { day: "السبت", routines: [] }, { day: "الأحد", routines: [] }, { day: "الإثنين", routines: [] },
         { day: "الثلاثاء", routines: [] }, { day: "الأربعاء", routines: [] }, { day: "الخميس", routines: [] }, { day: "الجمعة", routines: [] }
     ];
 
-    const defaultCategories = ["العناية الصباحية", "العناية بالشعر", "العناية المسائية", "الالرياضية"];
+    const defaultCategories = ["العناية الصباحية", "العناية بالشعر", "العناية المسائية", "الرياضية"];
 
     let careData = JSON.parse(localStorage.getItem('myCustomCareData')) || emptyCareData;
     let categories = JSON.parse(localStorage.getItem('myCareCategories')) || defaultCategories;
@@ -246,12 +245,13 @@
         setupDailyCheck();
     });
 
+    // إدارة الحساب والمزامنة السحابية
     function initAuthCheck() {
-        if (!supabaseClient) return;
-        supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        if (!supabase) return;
+        supabase.auth.getSession().then(({ data: { session } }) => {
             handleSessionChange(session);
         });
-        supabaseClient.auth.onAuthStateChange((_event, session) => {
+        supabase.auth.onAuthStateChange((_event, session) => {
             handleSessionChange(session);
         });
     }
@@ -271,25 +271,27 @@
     }
 
     async function handleSignUp() {
-        if (!supabaseClient) { alert("تنبيه: لاستخدام ميزة المزامنة السحابية، يرجى تزويد الكود بروابط مشروع Supabase الخاص بك أولاً."); return; }
+        if (!supabase) { alert("الرجاء إعداد روابط Supabase أولاً لتفعيل التخزين السحابي!"); return; }
         const email = document.getElementById('authEmail').value.trim();
         const password = document.getElementById('authPassword').value;
-        if (!email || !password) { alert("أدخلي البريد الرقم السري أولاً!"); return; }
-        const { error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) alert("خطأ: " + error.message);
-        else alert("تم إنشاء الحساب بنجاح!");
+        if (!email || !password) { alert("أدخلي البريد والرقم السري أولاً!"); return; }
+        
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) alert("خطأ في إنشاء الحساب: " + error.message);
+        else alert("تم إنشاء الحساب بنجاح! افحصي بريدك لتأكيده التفعيل إذا تطلب الأمر.");
     }
 
     async function handleLogin() {
-        if (!supabaseClient) { alert("تنبيه: لاستخدام ميزة المزامنة السحابية، يرجى تزويد الكود بروابط مشروع Supabase الخاص بك أولاً."); return; }
+        if (!supabase) { alert("الرجاء إعداد روابط Supabase أولاً لتفعيل التخزين السحابي!"); return; }
         const email = document.getElementById('authEmail').value.trim();
         const password = document.getElementById('authPassword').value;
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) alert("فشل تسجيل الدخول: " + error.message);
     }
 
     async function handleLogout() {
-        if (supabaseClient) await supabaseClient.auth.signOut();
+        if (supabase) await supabase.auth.signOut();
         localStorage.removeItem('myCustomCareData');
         localStorage.removeItem('userCareProgress_2026');
         careData = emptyCareData;
@@ -297,36 +299,35 @@
         renderSchedule();
     }
 
+    // دفع البيانات للسحاب وحفظها
     async function pushDataToCloud() {
-        if (!supabaseClient || !currentUser) return;
-        try {
-            await supabaseClient.from('user_routines').upsert({
-                user_id: currentUser.id,
-                care_data: careData,
-                user_progress: userProgress,
-                categories: categories,
-                updated_at: new Date()
-            });
-        } catch(e) { console.log(e); }
+        if (!supabase || !currentUser) return;
+        await supabase.from('user_routines').upsert({
+            user_id: currentUser.id,
+            care_data: careData,
+            user_progress: userProgress,
+            categories: categories,
+            updated_at: new Date()
+        });
     }
 
+    // جلب البيانات من السحاب عند الدخول من جهاز آخر
     async function pullDataFromCloud() {
-        if (!supabaseClient || !currentUser) return;
-        try {
-            const { data, error } = await supabaseClient.from('user_routines').select('*').eq('user_id', currentUser.id).single();
-            if (data && !error) {
-                careData = data.care_data || emptyCareData;
-                userProgress = data.user_progress || {};
-                categories = data.categories || defaultCategories;
-                localStorage.setItem('myCustomCareData', JSON.stringify(careData));
-                localStorage.setItem('userCareProgress_2026', JSON.stringify(userProgress));
-                localStorage.setItem('myCareCategories', JSON.stringify(categories));
-                updateCategorySelect();
-                renderSchedule();
-            }
-        } catch(e) { console.log(e); }
+        if (!supabase || !currentUser) return;
+        const { data, error } = await supabase.from('user_routines').select('*').eq('user_id', currentUser.id).single();
+        if (data && !error) {
+            careData = data.care_data || emptyCareData;
+            userProgress = data.user_progress || {};
+            categories = data.categories || defaultCategories;
+            localStorage.setItem('myCustomCareData', JSON.stringify(careData));
+            localStorage.setItem('userCareProgress_2026', JSON.stringify(userProgress));
+            localStorage.setItem('myCareCategories', JSON.stringify(categories));
+            updateCategorySelect();
+            renderSchedule();
+        }
     }
 
+    // تحديث خيارات الأقسام وإدماج خيار "قسم آخر" ذكياً
     function updateCategorySelect() {
         const select = document.getElementById('newCatSelect');
         select.innerHTML = '';
@@ -338,6 +339,7 @@
             select.appendChild(opt);
         });
 
+        // خيار ذكي مدمج لإضافة قسم جديد بدون زحمة واجهات
         const promptOpt = document.createElement('option');
         promptOpt.value = "__NEW_CAT__";
         promptOpt.innerText = "➕ قسم آخر...";
@@ -402,6 +404,7 @@
             const currentStatus = userProgress[uniqueId]?.status || null;
             const currentReason = userProgress[uniqueId]?.reason || '';
 
+            // واجهة مصلحة ومتجاوبة لتفادي تداخل النصوص الطويلة
             routinesHtml += `
                 <div class="routine-row">
                     <div class="routine-info">
