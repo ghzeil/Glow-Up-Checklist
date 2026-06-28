@@ -98,7 +98,7 @@
       border-radius: var(--radius-sm);
       box-shadow: 0 4px 15px rgba(0,0,0,0.15);
       display: none;
-      min-width: 160px;
+      min-width: 170px;
       overflow: hidden;
       animation: fadeIn 0.2s ease;
     }
@@ -106,7 +106,7 @@
       display: block;
     }
     .dropdown-item {
-      padding: 10px 14px;
+      padding: 12px 14px;
       color: var(--text);
       text-align: right;
       cursor: pointer;
@@ -116,6 +116,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      text-decoration: none;
     }
     .dropdown-item:hover {
       background: var(--blush);
@@ -148,98 +149,6 @@
       align-items: center;
       gap: 6px;
     }
-
-    /* ─── AUTH MODAL ─── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(61, 41, 48, 0.5);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .modal-overlay.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .modal-card {
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      width: 90%;
-      max-width: 400px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      transform: translateY(20px);
-      transition: transform 0.3s ease;
-      position: relative;
-    }
-    .modal-overlay.show .modal-card {
-      transform: translateY(0);
-    }
-    .modal-close {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      background: none;
-      border: none;
-      font-size: 1.2rem;
-      color: var(--grey);
-      cursor: pointer;
-    }
-    .modal-close:hover { color: var(--red); }
-    
-    .auth-fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; margin-top: 10px; }
-    .auth-fields input {
-      padding: 12px;
-      border: 1.5px solid var(--blush-mid);
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 0.88rem;
-      background: var(--white);
-      outline: none;
-      transition: border .2s;
-      color: var(--text);
-      text-align: right;
-    }
-    .auth-fields input:focus { border-color: var(--rose-light); }
-    .auth-fields input::placeholder { color: var(--grey); font-size: 0.83rem; }
-    .auth-btns { display: flex; gap: 8px; justify-content: stretch; }
-    .auth-btns button { flex: 1; }
-
-    .btn-primary {
-      background: var(--rose);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 11px 20px;
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background .2s, transform .1s;
-    }
-    .btn-primary:hover { background: #D45670; }
-    .btn-primary:active { transform: scale(.97); }
-    
-    .btn-secondary {
-      background: var(--sky);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 11px 20px;
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background .2s;
-    }
-    .btn-secondary:hover { background: #4A8EBE; }
-    #auth-status { font-size: 0.82rem; color: var(--text-soft); margin-top: 10px; text-align: center; min-height: 18px; }
 
     /* ─── NOTIFICATION ─── */
     .notif-card { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
@@ -526,11 +435,13 @@
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
+  <!-- THREE DOTS MENU -->
   <div class="menu-container">
     <button class="btn-menu" id="menu-trigger" onclick="toggleDropdown(event)">⋮</button>
     <div class="dropdown-menu" id="dropdown-menu">
-      <div class="dropdown-item" onclick="openAuthModal()">🔒 المزامنة السحابية</div>
+      <a href="login.html" class="dropdown-item">🔒 حساب المزامنة السحابية</a>
     </div>
   </div>
 
@@ -538,26 +449,9 @@
   <p>مساحتك الذكية لتنظيم روتينك، والالتزام بأهدافك 💖</p>
 </div>
 
-<div class="modal-overlay" id="auth-modal" onclick="closeAuthModal(event)">
-  <div class="modal-card" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeAuthModal(event)">✕</button>
-    <div class="card-title" style="margin-bottom: 5px;">🔒 المزامنة السحابية</div>
-    <p style="font-size:0.82rem; color:var(--text-soft); margin-bottom:12px;">لحفظ مهامك والوصول لها من أي جهاز آخر</p>
-    
-    <div class="auth-fields">
-      <input type="email" id="auth-email" placeholder="البريد الإلكتروني..." />
-      <input type="password" id="auth-pass" placeholder="كلمة المرور..." />
-    </div>
-    <div class="auth-btns">
-      <button class="btn-primary" onclick="signIn()">تسجيل دخول</button>
-      <button class="btn-secondary" onclick="signUp()">إنشاء حساب</button>
-    </div>
-    <div id="auth-status"></div>
-  </div>
-</div>
-
 <div class="wrapper">
 
+  <!-- NOTIFICATION -->
   <div class="card notif-card">
     <div class="notif-info">فعّلي التنبيهات اليومية لتذكيرك بروتينك 🔔</div>
     <button class="btn-notif" id="notif-btn" onclick="toggleNotif()">
@@ -565,11 +459,13 @@
     </button>
   </div>
 
+  <!-- DAY SELECTOR -->
   <div class="card" style="padding-bottom:16px;">
     <div class="card-title">📅 استعراض وإدارة مهام يوم:</div>
     <div class="day-tabs" id="day-tabs"></div>
   </div>
 
+  <!-- ADD TASK -->
   <div class="card">
     <div class="card-title">➕ أضيفي مهمة جديدة</div>
     <div id="custom-section-wrap" style="display:none;" class="custom-section-row">
@@ -592,6 +488,7 @@
     </div>
   </div>
 
+  <!-- TASKS -->
   <div class="card" id="tasks-card">
     <div class="card-title" id="tasks-title">📋 مهام يوم ...</div>
     <div class="progress-wrap" id="progress-wrap" style="display:none;">
@@ -606,6 +503,7 @@
 
 </div>
 
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -623,25 +521,14 @@ function init() {
   populateSections();
   renderTasks();
   
-  // إغلاق القائمة المنسدلة عند الضغط في أي مكان خارجها
   window.addEventListener('click', () => {
     document.getElementById('dropdown-menu').classList.remove('show');
   });
 }
 
-/* ─── DROPDOWN & MODAL FUNCTIONS ─── */
 function toggleDropdown(event) {
   event.stopPropagation();
   document.getElementById('dropdown-menu').classList.toggle('show');
-}
-
-function openAuthModal() {
-  document.getElementById('dropdown-menu').classList.remove('show');
-  document.getElementById('auth-modal').classList.add('show');
-}
-
-function closeAuthModal(event) {
-  document.getElementById('auth-modal').classList.remove('show');
 }
 
 function buildDayTabs() {
@@ -671,7 +558,6 @@ function populateSections() {
   sel.appendChild(other);
 }
 
-/* ─── SECTION ─── */
 function handleSectionChange() {
   const val = document.getElementById('section-select').value;
   document.getElementById('custom-section-wrap').style.display = val === '__custom__' ? 'flex' : 'none';
@@ -691,17 +577,13 @@ function saveCustomSection() {
   showToast('✅ تمت إضافة القسم: ' + name);
 }
 
-/* ─── DATA ─── */
 function dayKey() { return 'day_' + currentDay; }
-
 function getTasks() { return data[dayKey()] || []; }
-
 function saveTasks(tasks) {
   data[dayKey()] = tasks;
   localStorage.setItem('glow_data', JSON.stringify(data));
 }
 
-/* ─── ADD ─── */
 function addTask() {
   const input = document.getElementById('task-input');
   const sec = document.getElementById('section-select');
@@ -716,7 +598,6 @@ function addTask() {
   showToast('✅ تمت إضافة المهمة');
 }
 
-/* ─── RENDER ─── */
 function renderTasks() {
   const tasks = getTasks();
   const list = document.getElementById('tasks-list');
@@ -821,8 +702,6 @@ function toggleNotif() {
   });
 }
 
-/* ─── TOAST ─── */
-let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -831,33 +710,6 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-/* ─── AUTH (Supabase stub) ─── */
-const SUPABASE_URL = ''; 
-const SUPABASE_ANON = ''; 
-
-function signIn() {
-  const email = document.getElementById('auth-email').value.trim();
-  const pass  = document.getElementById('auth-pass').value;
-  if (!email || !pass) { showToast('✏️ أدخلي البريد وكلمة المرور'); return; }
-  if (!SUPABASE_URL) {
-    document.getElementById('auth-status').textContent = '⚠️ أضيفي مفتاح Supabase لتفعيل المزامنة السحابية';
-    return;
-  }
-  showToast('🔒 تسجيل الدخول غير مفعّل — أضيفي مفتاح Supabase');
-}
-
-function signUp() {
-  const email = document.getElementById('auth-email').value.trim();
-  const pass  = document.getElementById('auth-pass').value;
-  if (!email || !pass) { showToast('✏️ أدخلي البريد وكلمة المرور'); return; }
-  if (!SUPABASE_URL) {
-    document.getElementById('auth-status').textContent = '⚠️ أضيفي مفتاح Supabase لتفعيل المزامنة السحابية';
-    return;
-  }
-  showToast('☁️ إنشاء الحساب غير مفعّل — أضيفي مفتاح Supabase');
-}
-
-/* ─── RUN ─── */
 init();
 </script>
 </body>
