@@ -723,29 +723,7 @@ async function init() {
   buildDayTabs();
   populateSections();
   
-  // التحقق من وجود مستخدم مسجل دخول
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) {
-    currentUser = session.user;
-    // تغيير أيقونة القائمة وإظهار زر الخروج
-    document.getElementById('menu-trigger').textContent = '👤';
-    document.getElementById('dropdown-menu').innerHTML = `
-      <div class="dropdown-item" style="font-weight:bold;color:var(--text-soft);font-size:0.75rem">${currentUser.email}</div>
-      <a href="#" class="dropdown-item" onclick="signOut(event)">🚪 تسجيل الخروج</a>
-    `;
-    // هنا يمكنك استدعاء دالة لجلب المهام من الـ Cloud إذا رغبتِ
-  }
-  
-  renderTasks();
-  // ... باقي كود الـ init الأصلي لديكِ
-}
-
-async function signOut(e) {
-  e.preventDefault();
-  await supabaseClient.auth.signOut();
-  localStorage.removeItem('glow_data'); // تنظيف اختياري لحماية البيانات
-  window.location.reload();
-}
+ 
     // انطلاق التطبيق
     init();
   </script>
