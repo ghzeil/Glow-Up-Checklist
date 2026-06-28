@@ -1,524 +1,36 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>✨ لوحة جدول عنايتي الشخصية</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --rose:       #E8647A;
-      --rose-light: #F4A0AE;
-      --blush:      #FDE8EC;
-      --blush-mid:  #FACCCE;
-      --gold:       #D4A853;
-      --cream:      #FFF8F9;
-      --white:      #FFFFFF;
-      --grey:       #9CA3AF;
-      --text:       #3D2930;
-      --text-soft:  #7D5A62;
-      --green:      #4CAF50;
-      --red:        #E05555;
-      --sky:        #5BA3D4;
-      --radius-sm:  8px;
-      --radius-md:  14px;
-      --radius-lg:  22px;
-      --shadow:     0 4px 20px rgba(232,100,122,0.13);
-    }
+// ⚠️ ضعي نفس بيانات مشروعك هنا أيضاً لربط الجداول والبيانات
+const SUPABASE_URL = 'https://your-project.supabase.co'; 
+const SUPABASE_ANON = 'your-anon-key'; 
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: linear-gradient(145deg, #FFF0F3 0%, #FFF8F9 50%, #F9F0FF 100%);
-      min-height: 100vh;
-      color: var(--text);
-      font-size: 15px;
-      line-height: 1.7;
-    }
-
-    /* ─── HEADER ─── */
-    .header {
-      background: linear-gradient(135deg, var(--rose) 0%, #C9506A 100%);
-      color: #fff;
-      text-align: center;
-      padding: 35px 20px 28px;
-      position: relative;
-      overflow: hidden;
-    }
-    .header::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.15) 0%, transparent 60%);
-    }
-    .header h1 {
-      font-size: clamp(1.4rem, 5vw, 2rem);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      position: relative;
-    }
-    .header p {
-      font-size: 0.88rem;
-      opacity: 0.88;
-      margin-top: 6px;
-      position: relative;
-    }
-    .header-sparkle { font-size: 1.4em; }
-
-    /* MENU BUTTON (THREE DOTS) */
-    .menu-container {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      z-index: 10;
-    }
-    .btn-menu {
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 1.2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-    .btn-menu:hover {
-      background: rgba(255, 255, 255, 0.35);
-    }
-    .dropdown-menu {
-      position: absolute;
-      left: 0;
-      top: 42px;
-      background: var(--white);
-      border-radius: var(--radius-sm);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-      display: none;
-      min-width: 170px;
-      overflow: hidden;
-      animation: fadeIn 0.2s ease;
-    }
-    .dropdown-menu.show {
-      display: block;
-    }
-    .dropdown-item {
-      padding: 12px 14px;
-      color: var(--text);
-      text-align: right;
-      cursor: pointer;
-      font-size: 0.88rem;
-      font-weight: 500;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-    }
-    .dropdown-item:hover {
-      background: var(--blush);
-      color: var(--rose);
-    }
-
-    /* ─── WRAPPER ─── */
-    .wrapper {
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 20px 16px 60px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    /* ─── CARD ─── */
-    .card {
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      box-shadow: var(--shadow);
-    }
-    .card-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--rose);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* ─── NOTIFICATION ─── */
-    .notif-card { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-    .notif-info { font-size: 0.88rem; color: var(--text-soft); }
-    .btn-notif {
-      background: linear-gradient(135deg, var(--rose) 0%, var(--rose-light) 100%);
-      color: #fff;
-      border: none;
-      border-radius: 50px;
-      padding: 10px 22px;
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity .2s, transform .1s;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .btn-notif:hover { opacity: .88; }
-    .btn-notif:active { transform: scale(.97); }
-    .btn-notif.active { background: linear-gradient(135deg, var(--green) 0%, #6FCF6F 100%); }
-
-    /* ─── DAY SELECTOR ─── */
-    .day-tabs {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
-    }
-    .day-tabs::-webkit-scrollbar { display: none; }
-    .day-tab {
-      flex-shrink: 0;
-      padding: 7px 14px;
-      border-radius: 50px;
-      border: 1.5px solid var(--blush-mid);
-      background: var(--white);
-      font-family: inherit;
-      font-size: 0.83rem;
-      font-weight: 600;
-      color: var(--text-soft);
-      cursor: pointer;
-      transition: all .2s;
-    }
-    .day-tab.active, .day-tab:hover {
-      background: var(--rose);
-      border-color: var(--rose);
-      color: #fff;
-    }
-    .day-tab.today-marker { border-color: var(--gold); }
-
-    /* ─── ADD TASK ─── */
-    .add-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-    .add-row input {
-      flex: 1;
-      min-width: 140px;
-      padding: 10px 14px;
-      border: 1.5px solid var(--blush-mid);
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 0.9rem;
-      outline: none;
-      background: var(--blush);
-      transition: border .2s;
-      color: var(--text);
-      text-align: right;
-    }
-    .add-row input:focus { border-color: var(--rose-light); background: var(--white); }
-    .add-row input::placeholder { color: var(--grey); }
-    .section-select-wrap { position: relative; }
-    .section-select {
-      appearance: none;
-      padding: 10px 36px 10px 14px;
-      border: 1.5px solid var(--blush-mid);
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 0.88rem;
-      background: var(--blush);
-      color: var(--text);
-      cursor: pointer;
-      outline: none;
-      min-width: 110px;
-    }
-    .section-select-wrap::after {
-      content: '⌄';
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: none;
-      color: var(--text-soft);
-      font-size: 1.1rem;
-    }
-    .custom-section-row { display: flex; gap: 8px; margin-bottom: 10px; animation: fadeIn .25s; }
-    .custom-section-row input {
-      flex: 1;
-      padding: 9px 14px;
-      border: 1.5px solid var(--blush-mid);
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 0.88rem;
-      outline: none;
-      background: var(--blush);
-      text-align: right;
-    }
-    .btn-add-task {
-      background: var(--rose);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 10px 18px;
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background .2s;
-    }
-    .btn-add-task:hover { background: #D45670; }
-
-    /* ─── TASKS LIST ─── */
-    .section-group { margin-bottom: 18px; }
-    .section-label {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--rose);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      margin-bottom: 8px;
-      padding: 4px 10px;
-      background: var(--blush);
-      border-radius: 50px;
-      display: inline-block;
-    }
-    .task-item {
-      background: var(--cream);
-      border: 1.5px solid var(--blush-mid);
-      border-radius: var(--radius-md);
-      padding: 12px 14px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      transition: box-shadow .2s;
-    }
-    .task-item:hover { box-shadow: 0 2px 12px rgba(232,100,122,.1); }
-    .task-item.done { background: #F0FFF0; border-color: #b3e6b3; }
-    .task-item.missed { background: #FFF5F5; border-color: #f5b3b3; }
-    .task-text {
-      flex: 1;
-      font-size: 0.92rem;
-      color: var(--text);
-      word-break: break-word;
-      overflow-wrap: anywhere;
-      white-space: pre-wrap;
-    }
-    .task-item.done .task-text { text-decoration: line-through; color: var(--grey); }
-    .task-controls { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
-    .btn-done {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      border: 2px solid var(--green);
-      background: transparent;
-      color: var(--green);
-      font-size: 1rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .2s;
-      font-weight: 700;
-    }
-    .btn-done:hover, .task-item.done .btn-done { background: var(--green); color: #fff; }
-    .btn-missed {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      border: 2px solid var(--red);
-      background: transparent;
-      color: var(--red);
-      font-size: 1rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .2s;
-      font-weight: 700;
-    }
-    .btn-missed:hover, .task-item.missed .btn-missed { background: var(--red); color: #fff; }
-    .btn-delete {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      border: 1.5px solid #ddd;
-      background: transparent;
-      color: var(--grey);
-      font-size: 0.8rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .2s;
-    }
-    .btn-delete:hover { border-color: var(--red); color: var(--red); background: #FFF0F0; }
-    .reason-box {
-      margin-top: 8px;
-      padding: 8px 10px;
-      background: #FFF5F5;
-      border: 1px solid #f5b3b3;
-      border-radius: var(--radius-sm);
-      font-size: 0.82rem;
-      color: var(--red);
-    }
-    .reason-input {
-      width: 100%;
-      margin-top: 6px;
-      padding: 7px 10px;
-      border: 1px solid #f5b3b3;
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 0.85rem;
-      background: #fff;
-      outline: none;
-      color: var(--text);
-      text-align: right;
-      resize: vertical;
-      min-height: 38px;
-    }
-    .reason-save {
-      margin-top: 6px;
-      padding: 5px 14px;
-      background: var(--red);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 0.82rem;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    /* ─── EMPTY STATE ─── */
-    .empty-state {
-      text-align: center;
-      padding: 34px 20px;
-      color: var(--text-soft);
-      font-size: 0.9rem;
-    }
-    .empty-state .emoji { font-size: 2.5rem; display: block; margin-bottom: 12px; }
-
-    /* ─── PROGRESS ─── */
-    .progress-wrap { margin-top: 4px; }
-    .progress-label { font-size: 0.8rem; color: var(--text-soft); display: flex; justify-content: space-between; margin-bottom: 4px; }
-    .progress-bar {
-      height: 8px;
-      background: var(--blush-mid);
-      border-radius: 50px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--rose-light), var(--rose));
-      border-radius: 50px;
-      transition: width .5s ease;
-    }
-
-    /* ─── TOAST ─── */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--text);
-      color: #fff;
-      padding: 10px 22px;
-      border-radius: 50px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      z-index: 999;
-      transition: transform .3s ease;
-      pointer-events: none;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-
-    /* ─── ANIMATIONS ─── */
-    @keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-    .fade-in { animation: fadeIn .25s ease forwards; }
-
-    @media (max-width: 420px) {
-      .add-row { flex-direction: column; }
-    }
-  </style>
-</head>
-<body>
-
-<!-- HEADER -->
-<div class="header">
-  <!-- THREE DOTS MENU -->
-  <div class="menu-container">
-    <button class="btn-menu" id="menu-trigger" onclick="toggleDropdown(event)">⋮</button>
-    <div class="dropdown-menu" id="dropdown-menu">
-      <a href="login.html" class="dropdown-item">🔒 حساب المزامنة السحابية</a>
-    </div>
-  </div>
-
-  <h1><span class="header-sparkle">✨</span> لوحة جدول عنايتي الشخصية <span class="header-sparkle">✨</span></h1>
-  <p>مساحتك الذكية لتنظيم روتينك، والالتزام بأهدافك 💖</p>
-</div>
-
-<div class="wrapper">
-
-  <!-- NOTIFICATION -->
-  <div class="card notif-card">
-    <div class="notif-info">فعّلي التنبيهات اليومية لتذكيرك بروتينك 🔔</div>
-    <button class="btn-notif" id="notif-btn" onclick="toggleNotif()">
-      🔔 تفعيل التنبيهات اليومية
-    </button>
-  </div>
-
-  <!-- DAY SELECTOR -->
-  <div class="card" style="padding-bottom:16px;">
-    <div class="card-title">📅 استعراض وإدارة مهام يوم:</div>
-    <div class="day-tabs" id="day-tabs"></div>
-  </div>
-
-  <!-- ADD TASK -->
-  <div class="card">
-    <div class="card-title">➕ أضيفي مهمة جديدة</div>
-    <div id="custom-section-wrap" style="display:none;" class="custom-section-row">
-      <input type="text" id="custom-section-input" placeholder="اكتبي اسم القسم الجديد..." />
-      <button class="btn-primary" onclick="saveCustomSection()">حفظ</button>
-    </div>
-    <div class="add-row">
-      <input type="text" id="task-input" placeholder="اكتبي روتين أو مهمة جديدة هنا..." onkeydown="if(event.key==='Enter')addTask()" />
-      <div class="section-select-wrap">
-        <select class="section-select" id="section-select" onchange="handleSectionChange()">
-          <option value="الصباح">الصباح</option>
-          <option value="المساء">المساء</option>
-          <option value="الرياضة">الرياضة</option>
-          <option value="الدراسة">الدراسة</option>
-          <option value="الصحة والتغذية">الصحة والتغذية</option>
-          <option value="__custom__">➕ قسم آخر...</option>
-        </select>
-      </div>
-      <button class="btn-add-task" onclick="addTask()">+ إضافة مهمة</button>
-    </div>
-  </div>
-
-  <!-- TASKS -->
-  <div class="card" id="tasks-card">
-    <div class="card-title" id="tasks-title">📋 مهام يوم ...</div>
-    <div class="progress-wrap" id="progress-wrap" style="display:none;">
-      <div class="progress-label">
-        <span>التقدم اليومي</span>
-        <span id="progress-text">0 / 0</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-    </div>
-    <div style="margin-top:14px;" id="tasks-list"></div>
-  </div>
-
-</div>
-
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<script>
-/* ─── CONSTANTS ─── */
 const DAYS = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
 const JS_TO_AR = [1,2,3,4,5,6,0];
 
 let currentDay = JS_TO_AR[new Date().getDay()];
 let customSections = JSON.parse(localStorage.getItem('glow_custom_sections') || '[]');
 let data = JSON.parse(localStorage.getItem('glow_data') || '{}');
+let currentUser = null;
+let toastTimer;
 
-/* ─── INIT ─── */
-function init() {
+async function init() {
   buildDayTabs();
   populateSections();
+  
+  // 1. التحقق التلقائي من وجود مستخدم مسجل دخول
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    // تغيير شكل زر القائمة ليظهر إيميل المستخدم وزر خروج
+    document.getElementById('menu-trigger').textContent = '👤';
+    document.getElementById('dropdown-menu').innerHTML = `
+      <div class="dropdown-item" style="font-weight:bold;color:var(--text-soft);font-size:0.75rem">${currentUser.email}</div>
+      <a href="#" class="dropdown-item" onclick="signOut(event)">🚪 تسجيل الخروج</a>
+    `;
+    // 2. جلب المهام المحفوظة سحابياً لهذا المستخدم
+    await fetchTasksFromCloud();
+  }
+  
   renderTasks();
   
   window.addEventListener('click', () => {
@@ -529,6 +41,28 @@ function init() {
 function toggleDropdown(event) {
   event.stopPropagation();
   document.getElementById('dropdown-menu').classList.toggle('show');
+}
+
+async function signOut(e) {
+  e.preventDefault();
+  await supabaseClient.auth.signOut();
+  localStorage.removeItem('glow_data'); // تنظيف الكاش المحلي عند الخروج
+  window.location.reload();
+}
+
+// دالة جلب المهام من سحابة Supabase
+async function fetchTasksFromCloud() {
+  if (!currentUser) return;
+  const { data: cloudData, error } = await supabaseClient
+    .from('user_tasks')
+    .select('day_key, task_data');
+    
+  if (!error && cloudData) {
+    let cloudObj = {};
+    cloudData.forEach(row => { cloudObj[row.day_key] = row.task_data; });
+    data = cloudObj;
+    localStorage.setItem('glow_data', JSON.stringify(data));
+  }
 }
 
 function buildDayTabs() {
@@ -579,9 +113,23 @@ function saveCustomSection() {
 
 function dayKey() { return 'day_' + currentDay; }
 function getTasks() { return data[dayKey()] || []; }
-function saveTasks(tasks) {
+
+// الدالة السحرية لحفظ المهام محلياً وسحابياً في نفس الوقت
+async function saveTasks(tasks) {
   data[dayKey()] = tasks;
   localStorage.setItem('glow_data', JSON.stringify(data));
+  
+  // إذا كان المستخدم مسجلاً، ارفع البيانات فوراً لـ Supabase
+  if (currentUser) {
+    const dKey = dayKey();
+    await supabaseClient
+      .from('user_tasks')
+      .upsert({ 
+        user_id: currentUser.id, 
+        day_key: dKey, 
+        task_data: tasks 
+      }, { onConflict: 'user_id,day_key' });
+  }
 }
 
 function addTask() {
@@ -592,10 +140,11 @@ function addTask() {
   if (!text) { showToast('✏️ اكتبي المهمة أولاً'); return; }
   const tasks = getTasks();
   tasks.push({ id: Date.now(), text, section, status: 'pending', reason: '' });
-  saveTasks(tasks);
-  input.value = '';
-  renderTasks();
-  showToast('✅ تمت إضافة المهمة');
+  saveTasks(tasks).then(() => {
+    input.value = '';
+    renderTasks();
+    showToast(currentUser ? '☁️ تم حفظ المهمة سحابياً' : '💾 تم الحفظ محلياً (سجلي للحفظ السحابي)');
+  });
 }
 
 function renderTasks() {
@@ -658,8 +207,7 @@ function setStatus(id, status) {
   if (!t) return;
   t.status = t.status === status ? 'pending' : status;
   if (t.status !== 'missed') t.reason = '';
-  saveTasks(tasks);
-  renderTasks();
+  saveTasks(tasks).then(() => renderTasks());
 }
 
 function saveReason(id, val) {
@@ -667,15 +215,15 @@ function saveReason(id, val) {
   const t = tasks.find(x => x.id === id);
   if (!t) return;
   t.reason = val;
-  saveTasks(tasks);
-  showToast('💾 تم حفظ السبب');
+  saveTasks(tasks).then(() => showToast('💾 تم حفظ السبب'));
 }
 
 function deleteTask(id) {
   const tasks = getTasks().filter(x => x.id !== id);
-  saveTasks(tasks);
-  renderTasks();
-  showToast('🗑 تم حذف المهمة');
+  saveTasks(tasks).then(() => {
+    renderTasks();
+    showToast('🗑 تم حذف المهمة');
+  });
 }
 
 /* ─── NOTIFICATION ─── */
@@ -710,7 +258,12 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-init();
-</script>
-</body>
-</html>
+// دالة لضمان تحميل مكتبة الجافاسكريبت لـ Supabase في الصفحة الرئيسية
+if (!window.supabase) {
+  const scriptTag = document.createElement('script');
+  scriptTag.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  scriptTag.onload = init;
+  document.head.appendChild(scriptTag);
+} else {
+  init();
+}
