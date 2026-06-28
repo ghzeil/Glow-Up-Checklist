@@ -725,28 +725,57 @@ async function init() {
   buildDayTabs();
   populateSections();
   
-  // التحقق من وجود مستخدم مسجل دخول
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) {
-    currentUser = session.user;
-    // تغيير أيقونة القائمة وإظهار زر الخروج
-    document.getElementById('menu-trigger').textContent = '👤';
-    document.getElementById('dropdown-menu').innerHTML = `
-      <div class="dropdown-item" style="font-weight:bold;color:var(--text-soft);font-size:0.75rem">${currentUser.email}</div>
-      <a href="#" class="dropdown-item" onclick="signOut(event)">🚪 تسجيل الخروج</a>
-    `;
-    // هنا يمكنك استدعاء دالة لجلب المهام من الـ Cloud إذا رغبتِ
+ async function init() {
+  // 1. نبني الأيام والأقسام أولاً لضمان ظهورها فوراً على الشاشة وعدم اختفائها
+  try {
+    if (typeof buildDayTabs === 'function') buildDayTabs();
+    if (typeof populateSections === 'function') populateSections();
+  } catch (e) {
+    console.error("خطأ أثناء بناء عناصر الواجهة:", e);
   }
-  
-  renderTasks();
-  // ... باقي كود الـ init الأصلي لديكِ
-}
 
-async function signOut(e) {
-  e.preventDefault();
-  await supabaseClient.auth.signOut();
-  localStorage.removeItem('glow_data'); // تنظيف اختياري لحماية البيانات
-  window.location.reload();
+  // 2. التحقق الآمن من مستخدم Supabase دون تعطيل الصفحة في حال فشل الاتصال
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    try {
+      const { data: { session }, error } = await supabaseClient.auth.getSession();
+      
+      if (!error && session) {
+        currentUser = session.user;
+        
+        // تحديث القائمة الجانبية بشكل آمن إذا كانت موجودة
+        const menuTrigger = document.getElementById('menu-trigger');
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        
+        if (menuTrigger) menuTrigger.textContent = '👤';
+        if (dropdownMenu) {
+          dropdownMenu.innerHTML = `
+            <div class="dropdown-item" style="font-weight:bold;color:var(--text-soft);font-size:0.75rem">${currentUser.email}</div>
+            <a href="#" class="dropdown-item" onclick="signOut(event)">🚪 تسجيل الخروج</a>
+          `;
+        }
+        
+        // جلب البيانات من السحابة إذا كانت دالة Fetch مدعومة وموجودة
+        if (typeof fetchTasksFromCloud === 'function') {
+          await fetchTasksFromCloud();
+        }
+      }
+    } catch (e) {
+      console.warn("لم يتم الاتصال بـ Supabase، تم التحويل للوضع المحلي تلقائياً:", e);
+    }
+  }
+
+  // 3. عرض المهام في النهاية
+  try {
+    if (typeof renderTasks === 'function') renderTasks();
+  } catch (e) {
+    console.error("خطأ أثناء عرض المهام:", e);
+  }
+
+  // مراقبة إغلاق القائمة عند الضغط خارجها
+  window.addEventListener('click', () => {
+    const m = document.getElementById('dropdown-menu');
+    if (m) m.classList.remove('show');
+  });
 }
     // انطلاق التطبيق
     init();
