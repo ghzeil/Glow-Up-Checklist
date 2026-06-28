@@ -43,7 +43,7 @@
       background: linear-gradient(135deg, var(--rose) 0%, #C9506A 100%);
       color: #fff;
       text-align: center;
-      padding: 28px 20px 24px;
+      padding: 35px 20px 28px;
       position: relative;
       overflow: hidden;
     }
@@ -65,6 +65,62 @@
       position: relative;
     }
     .header-sparkle { font-size: 1.4em; }
+
+    /* MENU BUTTON (THREE DOTS) */
+    .menu-container {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 10;
+    }
+    .btn-menu {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .btn-menu:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+    .dropdown-menu {
+      position: absolute;
+      left: 0;
+      top: 42px;
+      background: var(--white);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      display: none;
+      min-width: 160px;
+      overflow: hidden;
+      animation: fadeIn 0.2s ease;
+    }
+    .dropdown-menu.show {
+      display: block;
+    }
+    .dropdown-item {
+      padding: 10px 14px;
+      color: var(--text);
+      text-align: right;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dropdown-item:hover {
+      background: var(--blush);
+      color: var(--rose);
+    }
 
     /* ─── WRAPPER ─── */
     .wrapper {
@@ -93,11 +149,53 @@
       gap: 6px;
     }
 
-    /* ─── AUTH ─── */
-    .auth-card { border: 1.5px dashed var(--blush-mid); background: var(--blush); }
-    .auth-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    /* ─── AUTH MODAL ─── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(61, 41, 48, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 400px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+    .modal-overlay.show .modal-card {
+      transform: translateY(0);
+    }
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: var(--grey);
+      cursor: pointer;
+    }
+    .modal-close:hover { color: var(--red); }
+    
+    .auth-fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; margin-top: 10px; }
     .auth-fields input {
-      padding: 10px 12px;
+      padding: 12px;
       border: 1.5px solid var(--blush-mid);
       border-radius: var(--radius-sm);
       font-family: inherit;
@@ -110,13 +208,15 @@
     }
     .auth-fields input:focus { border-color: var(--rose-light); }
     .auth-fields input::placeholder { color: var(--grey); font-size: 0.83rem; }
-    .auth-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .auth-btns { display: flex; gap: 8px; justify-content: stretch; }
+    .auth-btns button { flex: 1; }
+
     .btn-primary {
       background: var(--rose);
       color: #fff;
       border: none;
       border-radius: var(--radius-sm);
-      padding: 9px 20px;
+      padding: 11px 20px;
       font-family: inherit;
       font-size: 0.9rem;
       font-weight: 600;
@@ -125,12 +225,13 @@
     }
     .btn-primary:hover { background: #D45670; }
     .btn-primary:active { transform: scale(.97); }
+    
     .btn-secondary {
       background: var(--sky);
       color: #fff;
       border: none;
       border-radius: var(--radius-sm);
-      padding: 9px 20px;
+      padding: 11px 20px;
       font-family: inherit;
       font-size: 0.9rem;
       font-weight: 600;
@@ -138,7 +239,7 @@
       transition: background .2s;
     }
     .btn-secondary:hover { background: #4A8EBE; }
-    #auth-status { font-size: 0.82rem; color: var(--text-soft); margin-top: 8px; text-align: center; min-height: 18px; }
+    #auth-status { font-size: 0.82rem; color: var(--text-soft); margin-top: 10px; text-align: center; min-height: 18px; }
 
     /* ─── NOTIFICATION ─── */
     .notif-card { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
@@ -419,24 +520,30 @@
     .fade-in { animation: fadeIn .25s ease forwards; }
 
     @media (max-width: 420px) {
-      .auth-fields { grid-template-columns: 1fr; }
       .add-row { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
+  <div class="menu-container">
+    <button class="btn-menu" id="menu-trigger" onclick="toggleDropdown(event)">⋮</button>
+    <div class="dropdown-menu" id="dropdown-menu">
+      <div class="dropdown-item" onclick="openAuthModal()">🔒 المزامنة السحابية</div>
+    </div>
+  </div>
+
   <h1><span class="header-sparkle">✨</span> لوحة جدول عنايتي الشخصية <span class="header-sparkle">✨</span></h1>
-  <p>مساحتك الذكية لتنظيم روتينك، تتبع توهجك اليومي، والالتزام بأهدافك 💖</p>
+  <p>مساحتك الذكية لتنظيم روتينك، والالتزام بأهدافك 💖</p>
 </div>
 
-<div class="wrapper">
-
-  <!-- AUTH -->
-  <div class="card auth-card">
-    <div class="card-title">🔒 المزامنة السحابية <span style="font-weight:400;font-size:.85rem;color:var(--text-soft)">(اختياري — لحفظ مهامك من أي جهاز)</span></div>
+<div class="modal-overlay" id="auth-modal" onclick="closeAuthModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeAuthModal(event)">✕</button>
+    <div class="card-title" style="margin-bottom: 5px;">🔒 المزامنة السحابية</div>
+    <p style="font-size:0.82rem; color:var(--text-soft); margin-bottom:12px;">لحفظ مهامك والوصول لها من أي جهاز آخر</p>
+    
     <div class="auth-fields">
       <input type="email" id="auth-email" placeholder="البريد الإلكتروني..." />
       <input type="password" id="auth-pass" placeholder="كلمة المرور..." />
@@ -447,8 +554,10 @@
     </div>
     <div id="auth-status"></div>
   </div>
+</div>
 
-  <!-- NOTIFICATION -->
+<div class="wrapper">
+
   <div class="card notif-card">
     <div class="notif-info">فعّلي التنبيهات اليومية لتذكيرك بروتينك 🔔</div>
     <button class="btn-notif" id="notif-btn" onclick="toggleNotif()">
@@ -456,13 +565,11 @@
     </button>
   </div>
 
-  <!-- DAY SELECTOR -->
   <div class="card" style="padding-bottom:16px;">
     <div class="card-title">📅 استعراض وإدارة مهام يوم:</div>
     <div class="day-tabs" id="day-tabs"></div>
   </div>
 
-  <!-- ADD TASK -->
   <div class="card">
     <div class="card-title">➕ أضيفي مهمة جديدة</div>
     <div id="custom-section-wrap" style="display:none;" class="custom-section-row">
@@ -475,8 +582,6 @@
         <select class="section-select" id="section-select" onchange="handleSectionChange()">
           <option value="الصباح">الصباح</option>
           <option value="المساء">المساء</option>
-          <option value="الليل">الليل</option>
-          <option value="العناية بالبشرة">العناية بالبشرة</option>
           <option value="الرياضة">الرياضة</option>
           <option value="الدراسة">الدراسة</option>
           <option value="الصحة والتغذية">الصحة والتغذية</option>
@@ -487,7 +592,6 @@
     </div>
   </div>
 
-  <!-- TASKS -->
   <div class="card" id="tasks-card">
     <div class="card-title" id="tasks-title">📋 مهام يوم ...</div>
     <div class="progress-wrap" id="progress-wrap" style="display:none;">
@@ -502,13 +606,11 @@
 
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
 /* ─── CONSTANTS ─── */
 const DAYS = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
-// JS getDay(): 0=Sun,1=Mon,...,6=Sat → map to our index (Sat=0)
 const JS_TO_AR = [1,2,3,4,5,6,0];
 
 let currentDay = JS_TO_AR[new Date().getDay()];
@@ -520,6 +622,26 @@ function init() {
   buildDayTabs();
   populateSections();
   renderTasks();
+  
+  // إغلاق القائمة المنسدلة عند الضغط في أي مكان خارجها
+  window.addEventListener('click', () => {
+    document.getElementById('dropdown-menu').classList.remove('show');
+  });
+}
+
+/* ─── DROPDOWN & MODAL FUNCTIONS ─── */
+function toggleDropdown(event) {
+  event.stopPropagation();
+  document.getElementById('dropdown-menu').classList.toggle('show');
+}
+
+function openAuthModal() {
+  document.getElementById('dropdown-menu').classList.remove('show');
+  document.getElementById('auth-modal').classList.add('show');
+}
+
+function closeAuthModal(event) {
+  document.getElementById('auth-modal').classList.remove('show');
 }
 
 function buildDayTabs() {
@@ -537,8 +659,7 @@ function buildDayTabs() {
 
 function populateSections() {
   const sel = document.getElementById('section-select');
-  // remove old custom options (keep built-ins)
-  const builtIn = ['الصباح','المساء','الليل','العناية بالبشرة','الرياضة','الدراسة','الصحة والتغذية'];
+  const builtIn = ['الصباح','المساء','الرياضة','الدراسة','الصحة والتغذية'];
   sel.innerHTML = '';
   [...builtIn, ...customSections].forEach(s => {
     const o = document.createElement('option');
@@ -573,9 +694,7 @@ function saveCustomSection() {
 /* ─── DATA ─── */
 function dayKey() { return 'day_' + currentDay; }
 
-function getTasks() {
-  return data[dayKey()] || [];
-}
+function getTasks() { return data[dayKey()] || []; }
 
 function saveTasks(tasks) {
   data[dayKey()] = tasks;
@@ -612,13 +731,11 @@ function renderTasks() {
     return;
   }
 
-  // Progress
   const done = tasks.filter(t => t.status === 'done').length;
   progressWrap.style.display = 'block';
   document.getElementById('progress-text').textContent = done + ' / ' + tasks.length;
   document.getElementById('progress-fill').style.width = Math.round((done / tasks.length) * 100) + '%';
 
-  // Group by section
   const groups = {};
   tasks.forEach(t => { if (!groups[t.section]) groups[t.section] = []; groups[t.section].push(t); });
 
@@ -643,7 +760,6 @@ function renderTasks() {
             <button class="reason-save" onclick="saveReason(${task.id},this.previousElementSibling.value)">حفظ السبب</button>
           </div>` : ''}
       `;
-      // Fix layout: wrap controls + reason inside a flex col
       el.style.flexWrap = 'wrap';
       g.appendChild(el);
     });
@@ -715,11 +831,9 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-/* ─── AUTH (Supabase stub — replace with real keys) ─── */
-// To connect Supabase: replace SUPABASE_URL and SUPABASE_ANON_KEY below
-// and uncomment the import lines. The rest of the logic is ready.
-const SUPABASE_URL = ''; // e.g. https://xyz.supabase.co
-const SUPABASE_ANON = ''; // your anon key
+/* ─── AUTH (Supabase stub) ─── */
+const SUPABASE_URL = ''; 
+const SUPABASE_ANON = ''; 
 
 function signIn() {
   const email = document.getElementById('auth-email').value.trim();
@@ -729,7 +843,6 @@ function signIn() {
     document.getElementById('auth-status').textContent = '⚠️ أضيفي مفتاح Supabase لتفعيل المزامنة السحابية';
     return;
   }
-  // supabaseClient.auth.signInWithPassword({email,password:pass}).then(...)
   showToast('🔒 تسجيل الدخول غير مفعّل — أضيفي مفتاح Supabase');
 }
 
