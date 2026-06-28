@@ -507,8 +507,6 @@
   <div class="toast" id="toast"></div>
 
   <script>
-
-    
     /* ─── CONSTANTS & VARIABLES ─── */
     const DAYS = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
     const JS_TO_AR = [1,2,3,4,5,6,0];
@@ -716,11 +714,7 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
     }
-async function init() {
-  buildDayTabs();
-  populateSections();
-  
- 
+
     // انطلاق التطبيق
     init();
   </script>
