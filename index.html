@@ -6,6 +6,7 @@
   <title>✨ لوحة جدول عنايتي الشخصية</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --rose:       #E8647A;
@@ -253,6 +254,16 @@
       background: var(--blush);
       text-align: right;
     }
+    .btn-primary {
+      background: var(--rose);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 9px 16px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: bold;
+    }
     .btn-add-task {
       background: var(--rose);
       color: #fff;
@@ -435,9 +446,7 @@
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
-  <!-- THREE DOTS MENU -->
   <div class="menu-container">
     <button class="btn-menu" id="menu-trigger" onclick="toggleDropdown(event)">⋮</button>
     <div class="dropdown-menu" id="dropdown-menu">
@@ -451,7 +460,6 @@
 
 <div class="wrapper">
 
-  <!-- NOTIFICATION -->
   <div class="card notif-card">
     <div class="notif-info">فعّلي التنبيهات اليومية لتذكيرك بروتينك 🔔</div>
     <button class="btn-notif" id="notif-btn" onclick="toggleNotif()">
@@ -459,13 +467,11 @@
     </button>
   </div>
 
-  <!-- DAY SELECTOR -->
   <div class="card" style="padding-bottom:16px;">
     <div class="card-title">📅 استعراض وإدارة مهام يوم:</div>
     <div class="day-tabs" id="day-tabs"></div>
   </div>
 
-  <!-- ADD TASK -->
   <div class="card">
     <div class="card-title">➕ أضيفي مهمة جديدة</div>
     <div id="custom-section-wrap" style="display:none;" class="custom-section-row">
@@ -488,7 +494,6 @@
     </div>
   </div>
 
-  <!-- TASKS -->
   <div class="card" id="tasks-card">
     <div class="card-title" id="tasks-title">📋 مهام يوم ...</div>
     <div class="progress-wrap" id="progress-wrap" style="display:none;">
@@ -503,22 +508,42 @@
 
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-/* ─── CONSTANTS ─── */
+// ⚠️ ضعي بيانات مشروعك هنا ليتم ربط الجداول والبيانات بالشكل الصحيح
+const SUPABASE_URL = 'ضعى_رابط_المشروع_هنا'; 
+const SUPABASE_ANON = 'ضعى_المفتاح_العام_هنا'; 
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
 const DAYS = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
 const JS_TO_AR = [1,2,3,4,5,6,0];
 
 let currentDay = JS_TO_AR[new Date().getDay()];
 let customSections = JSON.parse(localStorage.getItem('glow_custom_sections') || '[]');
 let data = JSON.parse(localStorage.getItem('glow_data') || '{}');
+let currentUser = null;
+let toastTimer;
 
-/* ─── INIT ─── */
-function init() {
+async function init() {
   buildDayTabs();
   populateSections();
+  
+  // 1. التحقق التلقائي من وجود مستخدم مسجل دخول
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    // تغيير شكل زر القائمة ليظهر إيميل المستخدم وزر خروج
+    document.getElementById('menu-trigger').textContent = '👤';
+    document.getElementById('dropdown-menu').innerHTML = `
+      <div class="dropdown-item" style="font-weight:bold;color:var(--text-soft);font-size:0.75rem">${currentUser.email}</div>
+      <a href="#" class="dropdown-item" onclick="signOut(event)">🚪 تسجيل الخروج</a>
+    `;
+    // 2. جلب المهام المحفوظة سحابياً لهذا المستخدم من الجدول
+    await fetchTasksFromCloud();
+  }
+  
   renderTasks();
   
   window.addEventListener('click', () => {
@@ -529,6 +554,28 @@ function init() {
 function toggleDropdown(event) {
   event.stopPropagation();
   document.getElementById('dropdown-menu').classList.toggle('show');
+}
+
+async function signOut(e) {
+  e.preventDefault();
+  await supabaseClient.auth.signOut();
+  localStorage.removeItem('glow_data'); // تنظيف الكاش المحلي عند الخروج لمنع التداخل
+  window.location.reload();
+}
+
+// دالة جلب المهام من سحابة Supabase
+async function fetchTasksFromCloud() {
+  if (!currentUser) return;
+  const { data: cloudData, error } = await supabaseClient
+    .from('user_tasks')
+    .select('day_key, task_data');
+    
+  if (!error && cloudData) {
+    let cloudObj = {};
+    cloudData.forEach(row => { cloudObj[row.day_key] = row.task_data; });
+    data = cloudObj;
+    localStorage.setItem('glow_data', JSON.stringify(data));
+  }
 }
 
 function buildDayTabs() {
@@ -579,9 +626,23 @@ function saveCustomSection() {
 
 function dayKey() { return 'day_' + currentDay; }
 function getTasks() { return data[dayKey()] || []; }
-function saveTasks(tasks) {
+
+// الدالة الأساسية لحفظ المهام محلياً وسحابياً في نفس الوقت
+async function saveTasks(tasks) {
   data[dayKey()] = tasks;
   localStorage.setItem('glow_data', JSON.stringify(data));
+  
+  // إذا كان المستخدم مسجلاً، ارفع البيانات فوراً لـ Supabase
+  if (currentUser) {
+    const dKey = dayKey();
+    await supabaseClient
+      .from('user_tasks')
+      .upsert({ 
+        user_id: currentUser.id, 
+        day_key: dKey, 
+        task_data: tasks 
+      }, { onConflict: 'user_id,day_key' });
+  }
 }
 
 function addTask() {
@@ -592,10 +653,11 @@ function addTask() {
   if (!text) { showToast('✏️ اكتبي المهمة أولاً'); return; }
   const tasks = getTasks();
   tasks.push({ id: Date.now(), text, section, status: 'pending', reason: '' });
-  saveTasks(tasks);
-  input.value = '';
-  renderTasks();
-  showToast('✅ تمت إضافة المهمة');
+  saveTasks(tasks).then(() => {
+    input.value = '';
+    renderTasks();
+    showToast(currentUser ? '☁️ تم حفظ المهمة سحابياً' : '💾 تم الحفظ محلياً (سجلي للحفظ السحابي)');
+  });
 }
 
 function renderTasks() {
@@ -658,8 +720,7 @@ function setStatus(id, status) {
   if (!t) return;
   t.status = t.status === status ? 'pending' : status;
   if (t.status !== 'missed') t.reason = '';
-  saveTasks(tasks);
-  renderTasks();
+  saveTasks(tasks).then(() => renderTasks());
 }
 
 function saveReason(id, val) {
@@ -667,15 +728,15 @@ function saveReason(id, val) {
   const t = tasks.find(x => x.id === id);
   if (!t) return;
   t.reason = val;
-  saveTasks(tasks);
-  showToast('💾 تم حفظ السبب');
+  saveTasks(tasks).then(() => showToast('💾 تم حفظ السبب'));
 }
 
 function deleteTask(id) {
   const tasks = getTasks().filter(x => x.id !== id);
-  saveTasks(tasks);
-  renderTasks();
-  showToast('🗑 تم حذف المهمة');
+  saveTasks(tasks).then(() => {
+    renderTasks();
+    showToast('🗑 تم حذف المهمة');
+  });
 }
 
 /* ─── NOTIFICATION ─── */
@@ -710,7 +771,15 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-init();
+// دالة لضمان البدء بعد تحميل مكتبة Supabase
+if (!window.supabase) {
+  const scriptTag = document.createElement('script');
+  scriptTag.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  scriptTag.onload = init;
+  document.head.appendChild(scriptTag);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
