@@ -507,6 +507,12 @@
   <div class="toast" id="toast"></div>
 
   <script>
+   // ⚠️ ضعي بيانات مشروعك هنا ليتم الربط بنجاح
+const SUPABASE_URL = 'https://pbtkanzfmxlhabcukywy.supabase.co'; 
+const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc'; 
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    
     /* ─── CONSTANTS & VARIABLES ─── */
     const DAYS = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
     const JS_TO_AR = [1,2,3,4,5,6,0];
