@@ -3,149 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🔒 المزامنة السحابية - تسجيل الدخول</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <title>🔒 تسجيل الدخول والمزامنة</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --rose:       #E8647A;
-      --rose-light: #F4A0AE;
-      --blush:      #FDE8EC;
-      --blush-mid:  #FACCCE;
-      --white:      #FFFFFF;
-      --grey:       #9CA3AF;
-      --text:       #3D2930;
-      --text-soft:  #7D5A62;
-      --sky:        #5BA3D4;
-      --radius-sm:  8px;
-      --radius-lg:  22px;
-      --shadow:     0 4px 20px rgba(232,100,122,0.13);
+      --rose: #E8647A; --rose-light: #F4A0AE; --blush: #FDE8EC; --blush-mid: #FACCCE;
+      --white: #FFFFFF; --text: #3D2930; --text-soft: #7D5A62; --sky: #5BA3D4; --radius: 14px;
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Tajawal', sans-serif;
       background: linear-gradient(145deg, #FFF0F3 0%, #FFF8F9 50%, #F9F0FF 100%);
-      min-height: 100vh;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      min-height: 100vh; color: var(--text); display: flex; align-items: center; justify-content: center; padding: 20px;
     }
-
     .login-card {
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      padding: 30px 24px;
-      box-shadow: var(--shadow);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-      animation: fadeIn 0.4s ease;
+      background: var(--white); border-radius: var(--radius); padding: 35px 24px;
+      box-shadow: 0 4px 20px rgba(232,100,122,0.13); width: 100%; max-width: 400px; text-align: center;
     }
-
-    h2 {
-      color: var(--rose);
-      font-weight: 800;
-      font-size: 1.4rem;
-      margin-bottom: 8px;
-    }
-
-    p {
-      font-size: 0.88rem;
-      color: var(--text-soft);
-      margin-bottom: 24px;
-    }
-
-    .auth-fields {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
+    h2 { color: var(--rose); font-weight: 800; font-size: 1.5rem; margin-bottom: 8px; }
+    p { font-size: 0.88rem; color: var(--text-soft); margin-bottom: 24px; }
+    .auth-fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
     .auth-fields input {
-      padding: 12px 14px;
-      border: 1.5px solid var(--blush-mid);
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 0.9rem;
-      background: var(--white);
-      outline: none;
-      transition: border .2s;
-      color: var(--text);
-      text-align: right;
+      padding: 12px 14px; border: 1.5px solid var(--blush-mid); border-radius: 8px;
+      font-family: inherit; font-size: 0.9rem; outline: none; text-align: right; color: var(--text);
     }
-
-    .auth-fields input:focus {
-      border-color: var(--rose-light);
-    }
-
-    .auth-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .btn-primary {
-      background: var(--rose);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 12px;
-      font-family: inherit;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .2s, transform .1s;
-    }
-    .btn-primary:hover { background: #D45670; }
-    .btn-primary:active { transform: scale(.98); }
-
-    .btn-secondary {
-      background: var(--sky);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 12px;
-      font-family: inherit;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .2s;
-    }
-    .btn-secondary:hover { background: #4A8EBE; }
-
-    .back-link {
-      display: inline-block;
-      margin-top: 20px;
-      color: var(--text-soft);
-      text-decoration: none;
-      font-size: 0.85rem;
-      transition: color 0.2s;
-    }
-    .back-link:hover { color: var(--rose); }
-
-    #auth-status {
-      font-size: 0.85rem;
-      color: var(--text-soft);
-      margin-top: 14px;
-      min-height: 20px;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .auth-fields input:focus { border-color: var(--rose-light); }
+    .auth-btns { display: flex; flex-direction: column; gap: 10px; }
+    .btn-primary { background: var(--rose); color: #fff; border: none; border-radius: 8px; padding: 12px; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+    .btn-secondary { background: var(--sky); color: #fff; border: none; border-radius: 8px; padding: 12px; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+    .back-link { display: inline-block; margin-top: 20px; color: var(--text-soft); text-decoration: none; font-size: 0.85rem; }
+    #auth-status { font-size: 0.88rem; margin-top: 14px; min-height: 20px; font-weight: 600; }
   </style>
 </head>
 <body>
 
 <div class="login-card">
-  <h2>🔒 المزامنة السحابية</h2>
-  <p>سجلي دخولك لحفظ بيانات جدول العناية الخاص بك ومزامنتها على جميع أجهزتك ✨</p>
+  <h2>🔒 حساب العناية السحابي</h2>
+  <p>سجلي دخولك أو أنشئي حساباً لحفظ مهام روتينك ومزامنتها تلقائياً سحابياً ✨</p>
 
   <div class="auth-fields">
     <input type="email" id="auth-email" placeholder="البريد الإلكتروني..." />
@@ -153,45 +48,48 @@
   </div>
 
   <div class="auth-btns">
-    <button class="btn-primary" onclick="signIn()">تسجيل الدخول</button>
-    <button class="btn-secondary" onclick="signUp()">إنشاء حساب جديد</button>
+    <button class="btn-primary" onclick="handleAuth('signIn')">تسجيل الدخول</button>
+    <button class="btn-secondary" onclick="handleAuth('signUp')">إنشاء حساب جديد</button>
   </div>
 
   <div id="auth-status"></div>
-
-  <a href="index.html" class="back-link">← العودة لجدول المهام</a>
+  <a href="index.html" class="back-link">← العودة لجدول المهام بدون تسجيل</a>
 </div>
 
 <script>
-const SUPABASE_URL = ''; 
-const SUPABASE_ANON = ''; 
+// ⚠️ ضعي بيانات مشروعك هنا ليتم الربط بنجاح
+const SUPABASE_URL = 'https://your-project.supabase.co'; 
+const SUPABASE_ANON = 'your-anon-key'; 
 
-function signIn() {
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+async function handleAuth(type) {
   const email = document.getElementById('auth-email').value.trim();
-  const pass  = document.getElementById('auth-pass').value;
+  const pass = document.getElementById('auth-pass').value;
   const status = document.getElementById('auth-status');
   
-  if (!email || !pass) { status.textContent = '✏️ أدخلي البريد وكلمة المرور'; return; }
-  if (!SUPABASE_URL) {
-    status.textContent = '⚠️ أضيفي مفتاح Supabase لتفعيل المزامنة السحابية';
-    return;
-  }
-  status.textContent = '🔒 جاري الاتصال بـ Supabase...';
-}
-
-function signUp() {
-  const email = document.getElementById('auth-email').value.trim();
-  const pass  = document.getElementById('auth-pass').value;
-  const status = document.getElementById('auth-status');
+  if (!email || !pass) { status.style.color = 'red'; status.textContent = '✏️ أدخلي البريد وكلمة المرور'; return; }
   
-  if (!email || !pass) { status.textContent = '✏️ أدخلي البريد وكلمة المرور'; return; }
-  if (!SUPABASE_URL) {
-    status.textContent = '⚠️ أضيفي مفتاح Supabase لتفعيل المزامنة السحابية';
-    return;
+  status.style.color = 'var(--text)';
+  status.textContent = type === 'signIn' ? '🔒 جاري تسجيل الدخول...' : '☁️ جاري إنشاء الحساب...';
+
+  const { data, error } = type === 'signIn' 
+    ? await supabaseClient.auth.signInWithPassword({ email, password: pass })
+    : await supabaseClient.auth.signUp({ email, password: pass });
+
+  if (error) {
+    status.style.color = 'red';
+    status.textContent = '❌ خطأ: ' + error.message;
+  } else {
+    status.style.color = 'green';
+    if (type === 'signIn') {
+      status.textContent = '🎉 تم تسجيل الدخول بنجاح! جاري الانتقال...';
+      setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+    } else {
+      status.textContent = '✉️ تم التسجيل بنجاح! إذا تطلب الأمر، تحققي من بريدك لتأكيد الحساب.';
+    }
   }
-  status.textContent = '☁️ جاري إنشاء الحساب...';
 }
 </script>
-
 </body>
 </html>
