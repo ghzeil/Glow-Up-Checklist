@@ -419,4 +419,360 @@
       border-radius: 50px;
       font-size: 0.88rem;
       font-weight: 600;
-      z-index
+      z-index: 999;
+      transition: transform .3s ease;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn .25s ease forwards; }
+
+    @media (max-width: 420px) {
+      .add-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="menu-container">
+    <button class="btn-menu" id="menu-trigger" onclick="toggleDropdown(event)">⋮</button>
+    <div class="dropdown-menu" id="dropdown-menu">
+      <a href="login.html" class="dropdown-item">🔒 حساب المزامنة السحابية</a>
+    </div>
+  </div>
+
+  <h1><span class="header-sparkle">✨</span> لوحة جدول عنايتي الشخصية <span class="header-sparkle">✨</span></h1>
+  <p>مساحتك الذكية لتنظيم روتينك، والالتزام بأهدافك 💖</p>
+</div>
+
+<div class="wrapper">
+
+  <div class="card notif-card">
+    <div class="notif-info">فعّلي التنبيهات اليومية لتذكيرك بروتينك 🔔</div>
+    <button class="btn-notif" id="notif-btn" onclick="toggleNotif()">
+      🔔 تفعيل التنبيهات اليومية
+    </button>
+  </div>
+
+  <div class="card" style="padding-bottom:16px;">
+    <div class="card-title">📅 استعراض وإدارة مهام يوم:</div>
+    <div class="day-tabs" id="day-tabs"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">➕ أضيفي مهمة جديدة</div>
+    <div id="custom-section-wrap" style="display:none;" class="custom-section-row">
+      <input type="text" id="custom-section-input" placeholder="اكتبي اسم القسم الجديد..." />
+      <button class="btn-add-task" style="padding: 9px 16px;" onclick="saveCustomSection()">حفظ</button>
+    </div>
+    <div class="add-row">
+      <input type="text" id="task-input" placeholder="اكتبي روتين أو مهمة جديدة هنا..." onkeydown="if(event.key==='Enter')addTask()" />
+      <div class="section-select-wrap">
+        <select class="section-select" id="section-select" onchange="handleSectionChange()">
+          <option value="الصباح">الصباح</option>
+          <option value="المساء">المساء</option>
+          <option value="الرياضة">الرياضة</option>
+          <option value="الدراسة">الدراسة</option>
+          <option value="الصحة والتغذية">الصحة والتغذية</option>
+          <option value="__custom__">➕ قسم آخر...</option>
+        </select>
+      </div>
+      <button class="btn-add-task" onclick="addTask()">+ إضافة مهمة</button>
+    </div>
+  </div>
+
+  <div class="card" id="tasks-card">
+    <div class="card-title" id="tasks-title">📋 مهام يوم ...</div>
+    <div class="progress-wrap" id="progress-wrap" style="display:none;">
+      <div class="progress-label">
+        <span>التقدم اليومي</span>
+        <span id="progress-text">0 / 0</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div style="margin-top:14px;" id="tasks-list"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ─── SUPABASE SETTINGS ─── */
+// ⚠️ ضعي روابط مشروعك الفعلي هنا للتشغيل والمزامنة السحابية
+const SUPABASE_URL = 'ضعى_رابط_المشروع_هنا'; 
+const SUPABASE_ANON = 'ضعى_المفتاح_العام_هنا'; 
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+/* ─── CONSTANTS ─── */
+const DAYS = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+const JS_TO_AR = [1,2,3,4,5,6,0];
+
+let currentDay = JS_TO_AR[new Date().getDay()];
+let customSections = JSON.parse(localStorage.getItem('glow_custom_sections') || '[]');
+let data = JSON.parse(localStorage.getItem('glow_data') || '{}');
+let currentUser = null;
+let toastTimer;
+
+/* ─── INIT ─── */
+async function init() {
+  buildDayTabs();
+  populateSections();
+  
+  // 1. التحقق من وجود جلسة مستخدم مسجل دخول
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    // تعديل شكل القائمة العلوية لتظهر حساب المستخدم وزر الخروج
+    document.getElementById('menu-trigger').textContent = '👤';
+    document.getElementById('dropdown-menu').innerHTML = `
+      <div class="dropdown-item" style="font-weight:bold;color:var(--text-soft);font-size:0.75rem">${currentUser.email}</div>
+      <a href="#" class="dropdown-item" onclick="signOut(event)">🚪 تسجيل الخروج</a>
+    `;
+    // 2. مزامنة المهام وجلبها من السحاب فوراً
+    await fetchTasksFromCloud();
+  }
+  
+  renderTasks();
+  
+  window.addEventListener('click', () => {
+    document.getElementById('dropdown-menu').classList.remove('show');
+  });
+}
+
+function toggleDropdown(event) {
+  event.stopPropagation();
+  document.getElementById('dropdown-menu').classList.toggle('show');
+}
+
+async function signOut(e) {
+  e.preventDefault();
+  await supabaseClient.auth.signOut();
+  localStorage.removeItem('glow_data'); // تنظيف الذاكرة المحلية لمنع تداخل الحسابات
+  window.location.reload();
+}
+
+// دالة لجلب المهام المخزنة سحابياً للمستخدم الحالي
+async function fetchTasksFromCloud() {
+  if (!currentUser) return;
+  const { data: cloudData, error } = await supabaseClient
+    .from('user_tasks')
+    .select('day_key, task_data');
+    
+  if (!error && cloudData) {
+    let cloudObj = {};
+    cloudData.forEach(row => { cloudObj[row.day_key] = row.task_data; });
+    data = cloudObj;
+    localStorage.setItem('glow_data', JSON.stringify(data));
+  }
+}
+
+function buildDayTabs() {
+  const wrap = document.getElementById('day-tabs');
+  wrap.innerHTML = '';
+  const todayIdx = JS_TO_AR[new Date().getDay()];
+  DAYS.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'day-tab' + (i === currentDay ? ' active' : '') + (i === todayIdx ? ' today-marker' : '');
+    btn.textContent = d + (i === todayIdx ? ' ⭐' : '');
+    btn.onclick = () => { currentDay = i; buildDayTabs(); renderTasks(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function populateSections() {
+  const sel = document.getElementById('section-select');
+  const builtIn = ['الصباح','المساء','الرياضة','الدراسة','الصحة والتغذية'];
+  sel.innerHTML = '';
+  [...builtIn, ...customSections].forEach(s => {
+    const o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    sel.appendChild(o);
+  });
+  const other = document.createElement('option');
+  other.value = '__custom__'; other.textContent = '➕ قسم آخر...';
+  sel.appendChild(other);
+}
+
+function handleSectionChange() {
+  const val = document.getElementById('section-select').value;
+  document.getElementById('custom-section-wrap').style.display = val === '__custom__' ? 'flex' : 'none';
+}
+
+function saveCustomSection() {
+  const name = document.getElementById('custom-section-input').value.trim();
+  if (!name) return;
+  if (!customSections.includes(name)) {
+    customSections.push(name);
+    localStorage.setItem('glow_custom_sections', JSON.stringify(customSections));
+    populateSections();
+  }
+  document.getElementById('section-select').value = name;
+  document.getElementById('custom-section-input').value = '';
+  document.getElementById('custom-section-wrap').style.display = 'none';
+  showToast('✅ تمت إضافة القسم: ' + name);
+}
+
+function dayKey() { return 'day_' + currentDay; }
+function getTasks() { return data[dayKey()] || []; }
+
+// دالة حفظ متطورة تحفظ في الـ LocalStorage وترفع لـ Supabase فوراً إذا كان الحساب متصلاً
+async function saveTasks(tasks) {
+  data[dayKey()] = tasks;
+  localStorage.setItem('glow_data', JSON.stringify(data));
+  
+  if (currentUser) {
+    const dKey = dayKey();
+    await supabaseClient
+      .from('user_tasks')
+      .upsert({ 
+        user_id: currentUser.id, 
+        day_key: dKey, 
+        task_data: tasks 
+      }, { onConflict: 'user_id,day_key' });
+  }
+}
+
+function addTask() {
+  const input = document.getElementById('task-input');
+  const sec = document.getElementById('section-select');
+  const text = input.value.trim();
+  const section = sec.value === '__custom__' ? (document.getElementById('custom-section-input').value.trim() || 'عام') : sec.value;
+  if (!text) { showToast('✏️ اكتبي المهمة أولاً'); return; }
+  const tasks = getTasks();
+  tasks.push({ id: Date.now(), text, section, status: 'pending', reason: '' });
+  
+  saveTasks(tasks).then(() => {
+    input.value = '';
+    renderTasks();
+    showToast(currentUser ? '☁️ تم حفظ المهمة سحابياً' : '✅ تمت إضافة المهمة محلياً');
+  });
+}
+
+function renderTasks() {
+  const tasks = getTasks();
+  const list = document.getElementById('tasks-list');
+  const title = document.getElementById('tasks-title');
+  const progressWrap = document.getElementById('progress-wrap');
+  title.textContent = '📋 مهام يوم ' + DAYS[currentDay];
+  list.innerHTML = '';
+
+  if (tasks.length === 0) {
+    progressWrap.style.display = 'none';
+    list.innerHTML = `<div class="empty-state"><span class="emoji">✨</span>لا توجد مهام مضافة ليوم (${DAYS[currentDay]}) حتى الآن.<br>أضيفي روتينك الخاص باستخدام الصندوق أعلاه!</div>`;
+    return;
+  }
+
+  const done = tasks.filter(t => t.status === 'done').length;
+  progressWrap.style.display = 'block';
+  document.getElementById('progress-text').textContent = done + ' / ' + tasks.length;
+  document.getElementById('progress-fill').style.width = Math.round((done / tasks.length) * 100) + '%';
+
+  const groups = {};
+  tasks.forEach(t => { if (!groups[t.section]) groups[t.section] = []; groups[t.section].push(t); });
+
+  Object.entries(groups).forEach(([sec, items]) => {
+    const g = document.createElement('div');
+    g.className = 'section-group fade-in';
+    g.innerHTML = `<div class="section-label">${sec}</div>`;
+    items.forEach(task => {
+      const el = document.createElement('div');
+      el.className = 'task-item' + (task.status === 'done' ? ' done' : task.status === 'missed' ? ' missed' : '');
+      el.innerHTML = `
+        <div class="task-text">${escHtml(task.text)}</div>
+        <div class="task-controls">
+          <button class="btn-done" title="تم الإنجاز" onclick="setStatus(${task.id},'done')">✓</button>
+          <button class="btn-missed" title="لم يتم" onclick="setStatus(${task.id},'missed')">✗</button>
+          <button class="btn-delete" title="حذف" onclick="deleteTask(${task.id})">🗑</button>
+        </div>
+        ${task.status === 'missed' ? `
+          <div class="reason-box" style="width:100%">
+            <div>💭 سبب عدم الإتمام:</div>
+            <textarea class="reason-input" placeholder="اكتبي السبب هنا..." onchange="saveReason(${task.id},this.value)">${escHtml(task.reason)}</textarea>
+            <button class="reason-save" onclick="saveReason(${task.id},this.previousElementSibling.value)">حفظ السبب</button>
+          </div>` : ''}
+      `;
+      el.style.flexWrap = 'wrap';
+      g.appendChild(el);
+    });
+    list.appendChild(g);
+  });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setStatus(id, status) {
+  const tasks = getTasks();
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = t.status === status ? 'pending' : status;
+  if (t.status !== 'missed') t.reason = '';
+  saveTasks(tasks).then(() => renderTasks());
+}
+
+function saveReason(id, val) {
+  const tasks = getTasks();
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.reason = val;
+  saveTasks(tasks).then(() => showToast('💾 تم حفظ السبب'));
+}
+
+function deleteTask(id) {
+  const tasks = getTasks().filter(x => x.id !== id);
+  saveTasks(tasks).then(() => {
+    renderTasks();
+    showToast('🗑 تم حذف المهمة');
+  });
+}
+
+/* ─── NOTIFICATION ─── */
+let notifActive = false;
+function toggleNotif() {
+  if (!('Notification' in window)) { showToast('⚠️ متصفحك لا يدعم الإشعارات'); return; }
+  if (notifActive) {
+    notifActive = false;
+    document.getElementById('notif-btn').classList.remove('active');
+    document.getElementById('notif-btn').innerHTML = '🔔 تفعيل التنبيهات اليومية';
+    showToast('🔕 تم إيقاف التنبيهات');
+    return;
+  }
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') {
+      notifActive = true;
+      document.getElementById('notif-btn').classList.add('active');
+      document.getElementById('notif-btn').innerHTML = '✅ التنبيهات مفعّلة';
+      new Notification('✨ تذكيرك اليومي!', { body: 'لا تنسي روتينك اليوم 💖', icon: '' });
+      showToast('🔔 تم تفعيل التنبيهات!');
+    } else {
+      showToast('⚠️ لم يتم السماح بالإشعارات');
+    }
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// التحقق والبدء الذكي
+if (!window.supabase) {
+  const scriptTag = document.createElement('script');
+  scriptTag.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  scriptTag.onload = init;
+  document.head.appendChild(scriptTag);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
