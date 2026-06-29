@@ -58,7 +58,6 @@
 </div>
 
 <script>
-// ⚠️ تأكدي من استبدال المفتاح الفعلي الممتد الطويل هنا ليعمل الاتصال بنجاح
 const SUPABASE_URL = 'https://pbtkanzfmxlhabcukywy.supabase.co'; 
 const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc'; 
 
@@ -85,7 +84,6 @@ async function handleAuth(type) {
 
     if (error) {
       status.style.color = 'red';
-      // ترجمة الأخطاء الشائعة لتجربة مستخدم أفضل
       if (error.message.includes("Invalid login credentials")) {
         status.textContent = '❌ خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.';
       } else if (error.message.includes("Email not confirmed")) {
@@ -99,14 +97,12 @@ async function handleAuth(type) {
         status.textContent = '🎉 تم تسجيل الدخول بنجاح! جاري الانتقال لجدولك الخاص...';
         setTimeout(() => { window.location.href = 'index.html'; }, 1200);
       } else {
-        // إذا كان تفعيل البريد إجبارياً في إعدادات Supabase
-        status.textContent = '✉️ تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك الإلكتروني لتأكيد التفعيل والدخول.';
+        status.textContent = '✉️ تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك وتأكيده لتفعيل السحاب.';
       }
     }
   } catch (err) {
     status.style.color = 'red';
     status.textContent = '⚠️ حدث خطأ أثناء الاتصال بالسيرفر.';
-    console.error(err);
   }
 }
 </script>
