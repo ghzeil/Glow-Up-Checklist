@@ -6,8 +6,9 @@
   <title>✨ لوحة جدول عنايتي الشخصية</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
-
   
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root {
       --rose:       #E8647A;
@@ -449,8 +450,8 @@
     <div class="menu-container">
       <button class="btn-menu" id="menu-trigger" onclick="toggleDropdown(event)">⋮</button>
       <div class="dropdown-menu" id="dropdown-menu">
-        <a href="login.html" class="dropdown-item">تسجيل الدخول </a>
-    <div>
+        <a href="login.html" class="dropdown-item">تسجيل الدخول</a>
+      </div>
     </div>
 
     <h1><span class="header-sparkle">✨</span> لوحة جدول عنايتي الشخصية <span class="header-sparkle">✨</span></h1>
@@ -508,10 +509,13 @@
   <div class="toast" id="toast"></div>
 
   <script>
-// ⚠️ ضعي بيانات مشروعك هنا ليتم الربط بنجاح
-const SUPABASE_URL = 'https://pbtkanzfmxlhabcukywy.supabase.co'; 
-const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc'; 
+    // ⚠️ بيانات المشروع للربط بـ Supabase
+    const SUPABASE_URL = 'https://pbtkanzfmxlhabcukywy.supabase.co'; 
+    const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc'; 
 
+    // تهيئة عميل Supabase بشكل صحيح وثابت
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    let currentUser = null;
     
     /* ─── CONSTANTS & VARIABLES ─── */
     const DAYS = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
@@ -520,16 +524,52 @@ const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc';
     let currentDay = JS_TO_AR[new Date().getDay()];
     let customSections = JSON.parse(localStorage.getItem('glow_custom_sections') || '[]');
     let data = JSON.parse(localStorage.getItem('glow_data') || '{}');
-    let toastTimer; // تم إضافة التعريف هنا لإصلاح خطأ الـ Uncaught ReferenceError
+    let toastTimer; 
 
     /* ─── INIT ─── */
-    function init() {
-      buildDayTabs();
-      populateSections();
-      renderTasks();
-      
+    async function init() {
+      // 1. بناء عناصر الواجهة فوراً
+      try {
+        buildDayTabs();
+        populateSections();
+      } catch (e) {
+        console.error("خطأ أثناء بناء عناصر الواجهة:", e);
+      }
+
+      // 2. التحقق الآمن من مستخدم Supabase
+      if (supabaseClient) {
+        try {
+          const { data: { session }, error } = await supabaseClient.auth.getSession();
+          
+          if (!error && session) {
+            currentUser = session.user;
+            
+            const menuTrigger = document.getElementById('menu-trigger');
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            
+            if (menuTrigger) menuTrigger.textContent = '👤';
+            if (dropdownMenu) {
+              dropdownMenu.innerHTML = `
+                <div class="dropdown-item" style="font-weight:bold;color:var(--text-soft);font-size:0.75rem">${currentUser.email}</div>
+                <a href="#" class="dropdown-item" onclick="signOut(event)">🚪 تسجيل الخروج</a>
+              `;
+            }
+          }
+        } catch (e) {
+          console.warn("لم يتم الاتصال بـ Supabase، تم الاعتماد على التخزين المحلي:", e);
+        }
+      }
+
+      // 3. عرض المهام
+      try {
+        renderTasks();
+      } catch (e) {
+        console.error("خطأ أثناء عرض المهام:", e);
+      }
+
       window.addEventListener('click', () => {
-        document.getElementById('dropdown-menu').classList.remove('show');
+        const m = document.getElementById('dropdown-menu');
+        if (m) m.classList.remove('show');
       });
     }
 
@@ -540,6 +580,7 @@ const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc';
 
     function buildDayTabs() {
       const wrap = document.getElementById('day-tabs');
+      if (!wrap) return;
       wrap.innerHTML = '';
       const todayIdx = JS_TO_AR[new Date().getDay()];
       DAYS.forEach((d, i) => {
@@ -553,6 +594,7 @@ const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc';
 
     function populateSections() {
       const sel = document.getElementById('section-select');
+      if (!sel) return;
       const builtIn = ['الصباح','المساء','الرياضة','الدراسة','الصحة والتغذية'];
       sel.innerHTML = '';
       [...builtIn, ...customSections].forEach(s => {
@@ -613,6 +655,8 @@ const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc';
       const list = document.getElementById('tasks-list');
       const title = document.getElementById('tasks-title');
       const progressWrap = document.getElementById('progress-wrap');
+      if (!list || !title || !progressWrap) return;
+      
       title.textContent = '📋 مهام اليوم ' + DAYS[currentDay];
       list.innerHTML = '';
 
@@ -641,13 +685,13 @@ const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc';
           el.innerHTML = `
             <div class="task-text">${escHtml(task.text)}</div>
             <div class="task-controls">
-              <button class="btn-done" title="سويته"onclick="setStatus(${task.id},'done')">✓</button>
+              <button class="btn-done" title="سويته" onclick="setStatus(${task.id},'done')">✓</button>
               <button class="btn-missed" title="ما سويته" onclick="setStatus(${task.id},'missed')">✗</button>
               <button class="btn-delete" title="حذف" onclick="deleteTask(${task.id})">🗑</button>
             </div>
             ${task.status === 'missed' ? `
               <div class="reason-box" style="width:100%">
-                <div>💭   ليه :</div>
+                <div>💭 ليه :</div>
                 <textarea class="reason-input" placeholder="اكتبي السبب هنا..." onchange="saveReason(${task.id},this.value)">${escHtml(task.reason)}</textarea>
                 <button class="reason-save" onclick="saveReason(${task.id},this.previousElementSibling.value)">حفظ السبب</button>
               </div>` : ''}
@@ -715,69 +759,23 @@ const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc';
 
     function showToast(msg) {
       const t = document.getElementById('toast');
+      if (!t) return;
       t.textContent = msg;
       t.classList.add('show');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
     }
-async function init() {
-  buildDayTabs();
-  populateSections();
-  
- async function init() {
-  // 1. نبني الأيام والأقسام أولاً لضمان ظهورها فوراً على الشاشة وعدم اختفائها
-  try {
-    if (typeof buildDayTabs === 'function') buildDayTabs();
-    if (typeof populateSections === 'function') populateSections();
-  } catch (e) {
-    console.error("خطأ أثناء بناء عناصر الواجهة:", e);
-  }
 
-  // 2. التحقق الآمن من مستخدم Supabase دون تعطيل الصفحة في حال فشل الاتصال
-  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-    try {
-      const { data: { session }, error } = await supabaseClient.auth.getSession();
-      
-      if (!error && session) {
-        currentUser = session.user;
-        
-        // تحديث القائمة الجانبية بشكل آمن إذا كانت موجودة
-        const menuTrigger = document.getElementById('menu-trigger');
-        const dropdownMenu = document.getElementById('dropdown-menu');
-        
-        if (menuTrigger) menuTrigger.textContent = '👤';
-        if (dropdownMenu) {
-          dropdownMenu.innerHTML = `
-            <div class="dropdown-item" style="font-weight:bold;color:var(--text-soft);font-size:0.75rem">${currentUser.email}</div>
-            <a href="#" class="dropdown-item" onclick="signOut(event)">🚪 تسجيل الخروج</a>
-          `;
-        }
-        
-        // جلب البيانات من السحابة إذا كانت دالة Fetch مدعومة وموجودة
-        if (typeof fetchTasksFromCloud === 'function') {
-          await fetchTasksFromCloud();
-        }
+    async function signOut(event) {
+      event.preventDefault();
+      if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+        window.location.reload();
       }
-    } catch (e) {
-      console.warn("لم يتم الاتصال بـ Supabase، تم التحويل للوضع المحلي تلقائياً:", e);
     }
-  }
 
-  // 3. عرض المهام في النهاية
-  try {
-    if (typeof renderTasks === 'function') renderTasks();
-  } catch (e) {
-    console.error("خطأ أثناء عرض المهام:", e);
-  }
-
-  // مراقبة إغلاق القائمة عند الضغط خارجها
-  window.addEventListener('click', () => {
-    const m = document.getElementById('dropdown-menu');
-    if (m) m.classList.remove('show');
-  });
-}
-    // انطلاق التطبيق
-    init();
+    // انطلاق التطبيق عند تحميل الصفحة
+    window.onload = init;
   </script>
 </body>
 </html>
