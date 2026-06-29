@@ -449,8 +449,8 @@
     <div class="menu-container">
       <button class="btn-menu" id="menu-trigger" onclick="toggleDropdown(event)">⋮</button>
       <div class="dropdown-menu" id="dropdown-menu">
-        <a href="login.html" class="dropdown-item">🔒 حساب المزامنة السحابية</a>
-      </div>
+        <a href="login.html" class="dropdown-item">تسجيل الدخول </a>
+    <div>
     </div>
 
     <h1><span class="header-sparkle">✨</span> لوحة جدول عنايتي الشخصية <span class="header-sparkle">✨</span></h1>
@@ -466,7 +466,7 @@
     </div>
 
     <div class="card" style="padding-bottom:16px;">
-      <div class="card-title">📅 استعراض وإدارة مهام يوم:</div>
+      <div class="card-title">📅 حددي اليوم :</div>
       <div class="day-tabs" id="day-tabs"></div>
     </div>
 
@@ -493,7 +493,7 @@
     </div>
 
     <div class="card" id="tasks-card">
-      <div class="card-title" id="tasks-title">📋 مهام يوم ...</div>
+      <div class="card-title" id="tasks-title">📋 مهام اليوم ...</div>
       <div class="progress-wrap" id="progress-wrap" style="display:none;">
         <div class="progress-label">
           <span>التقدم اليومي</span>
@@ -613,7 +613,7 @@ const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc';
       const list = document.getElementById('tasks-list');
       const title = document.getElementById('tasks-title');
       const progressWrap = document.getElementById('progress-wrap');
-      title.textContent = '📋 مهام يوم ' + DAYS[currentDay];
+      title.textContent = '📋 مهام اليوم ' + DAYS[currentDay];
       list.innerHTML = '';
 
       if (tasks.length === 0) {
@@ -641,13 +641,13 @@ const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc';
           el.innerHTML = `
             <div class="task-text">${escHtml(task.text)}</div>
             <div class="task-controls">
-              <button class="btn-done" title="تم الإنجاز" onclick="setStatus(${task.id},'done')">✓</button>
-              <button class="btn-missed" title="لم يتم" onclick="setStatus(${task.id},'missed')">✗</button>
+              <button class="btn-done" title="سويته"onclick="setStatus(${task.id},'done')">✓</button>
+              <button class="btn-missed" title="ما سويته" onclick="setStatus(${task.id},'missed')">✗</button>
               <button class="btn-delete" title="حذف" onclick="deleteTask(${task.id})">🗑</button>
             </div>
             ${task.status === 'missed' ? `
               <div class="reason-box" style="width:100%">
-                <div>💭 سبب عدم الإتمام:</div>
+                <div>💭   ليه :</div>
                 <textarea class="reason-input" placeholder="اكتبي السبب هنا..." onchange="saveReason(${task.id},this.value)">${escHtml(task.reason)}</textarea>
                 <button class="reason-save" onclick="saveReason(${task.id},this.previousElementSibling.value)">حفظ السبب</button>
               </div>` : ''}
@@ -705,7 +705,7 @@ const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc';
           notifActive = true;
           document.getElementById('notif-btn').classList.add('active');
           document.getElementById('notif-btn').innerHTML = '✅ التنبيهات مفعّلة';
-          new Notification('✨ تذكيرك اليومي!', { body: 'لا تنسي روتينك اليوم 💖', icon: '' });
+          new Notification('✨ تذكيرك اليومي!', { body: 'لا تنسي المهمه اليوم 💖', icon: '' });
           showToast('🔔 تم تفعيل التنبيهات!');
         } else {
           showToast('⚠️ لم يتم السماح بالإشعارات');
