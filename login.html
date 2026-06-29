@@ -30,10 +30,11 @@
     }
     .auth-fields input:focus { border-color: var(--rose-light); }
     .auth-btns { display: flex; flex-direction: column; gap: 10px; }
-    .btn-primary { background: var(--rose); color: #fff; border: none; border-radius: 8px; padding: 12px; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
-    .btn-secondary { background: var(--sky); color: #fff; border: none; border-radius: 8px; padding: 12px; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+    .btn-primary { background: var(--rose); color: #fff; border: none; border-radius: 8px; padding: 12px; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .btn-secondary { background: var(--sky); color: #fff; border: none; border-radius: 8px; padding: 12px; font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .btn-primary:hover, .btn-secondary:hover { opacity: 0.9; }
     .back-link { display: inline-block; margin-top: 20px; color: var(--text-soft); text-decoration: none; font-size: 0.85rem; }
-    #auth-status { font-size: 0.88rem; margin-top: 14px; min-height: 20px; font-weight: 600; }
+    #auth-status { font-size: 0.88rem; margin-top: 14px; min-height: 20px; font-weight: 600; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -44,7 +45,7 @@
 
   <div class="auth-fields">
     <input type="email" id="auth-email" placeholder="البريد الإلكتروني..." />
-    <input type="password" id="auth-pass" placeholder="كلمة المرور..." />
+    <input type="password" id="auth-pass" placeholder="كلمة المرور..." onkeydown="if(event.key==='Enter') handleAuth('signIn')" />
   </div>
 
   <div class="auth-btns">
@@ -57,7 +58,7 @@
 </div>
 
 <script>
-// ⚠️ ضعي بيانات مشروعك هنا ليتم الربط بنجاح
+// ⚠️ تأكدي من استبدال المفتاح الفعلي الممتد الطويل هنا ليعمل الاتصال بنجاح
 const SUPABASE_URL = 'https://pbtkanzfmxlhabcukywy.supabase.co'; 
 const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc'; 
 
@@ -68,26 +69,44 @@ async function handleAuth(type) {
   const pass = document.getElementById('auth-pass').value;
   const status = document.getElementById('auth-status');
   
-  if (!email || !pass) { status.style.color = 'red'; status.textContent = '✏️ أدخلي البريد وكلمة المرور'; return; }
+  if (!email || !pass) { 
+    status.style.color = 'red'; 
+    status.textContent = '✏️ أدخلي البريد وكلمة المرور أولاً'; 
+    return; 
+  }
   
   status.style.color = 'var(--text)';
-  status.textContent = type === 'signIn' ? '🔒 جاري تسجيل الدخول...' : '☁️ جاري إنشاء الحساب...';
+  status.textContent = type === 'signIn' ? '🔒 جاري التحقق وتسجيل الدخول...' : '☁️ جاري تهيئة حسابك الجديد...';
 
-  const { data, error } = type === 'signIn' 
-    ? await supabaseClient.auth.signInWithPassword({ email, password: pass })
-    : await supabaseClient.auth.signUp({ email, password: pass });
+  try {
+    const { data, error } = type === 'signIn' 
+      ? await supabaseClient.auth.signInWithPassword({ email, password: pass })
+      : await supabaseClient.auth.signUp({ email, password: pass });
 
-  if (error) {
-    status.style.color = 'red';
-    status.textContent = '❌ خطأ: ' + error.message;
-  } else {
-    status.style.color = 'green';
-    if (type === 'signIn') {
-      status.textContent = '🎉 تم تسجيل الدخول بنجاح! جاري الانتقال...';
-      setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+    if (error) {
+      status.style.color = 'red';
+      // ترجمة الأخطاء الشائعة لتجربة مستخدم أفضل
+      if (error.message.includes("Invalid login credentials")) {
+        status.textContent = '❌ خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+      } else if (error.message.includes("Email not confirmed")) {
+        status.textContent = '⚠️ يرجى تأكيد حسابك من خلال الرابط المرسل لبريدك الإلكتروني أولاً.';
+      } else {
+        status.textContent = '❌ خطأ: ' + error.message;
+      }
     } else {
-      status.textContent = '✉️ تم التسجيل بنجاح!.';
+      status.style.color = 'green';
+      if (type === 'signIn') {
+        status.textContent = '🎉 تم تسجيل الدخول بنجاح! جاري الانتقال لجدولك الخاص...';
+        setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+      } else {
+        // إذا كان تفعيل البريد إجبارياً في إعدادات Supabase
+        status.textContent = '✉️ تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك الإلكتروني لتأكيد التفعيل والدخول.';
+      }
     }
+  } catch (err) {
+    status.style.color = 'red';
+    status.textContent = '⚠️ حدث خطأ أثناء الاتصال بالسيرفر.';
+    console.error(err);
   }
 }
 </script>
