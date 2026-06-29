@@ -302,6 +302,8 @@
     }
     .task-item:hover { box-shadow: 0 2px 12px rgba(232,100,122,.1); }
     .task-item.done { background: #F0FFF0; border-color: #b3e6b3; }
+    
+    /* إصلاح مشكلة الخط المشطوب عند عدم إنجاز المهمة */
     .task-item.missed { background: #FFF5F5; border-color: #f5b3b3; }
     .task-text {
       flex: 1;
@@ -509,11 +511,10 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // ⚠️ بيانات المشروع للربط بـ Supabase
+    // بيانات المشروع للربط بـ Supabase
     const SUPABASE_URL = 'https://pbtkanzfmxlhabcukywy.supabase.co'; 
     const SUPABASE_ANON = 'sb_publishable_fX7lY5EZX2xcI8C31yGssQ_zjr8pwAc'; 
 
-    // تهيئة عميل Supabase بشكل صحيح وثابت
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
     let currentUser = null;
     
@@ -528,15 +529,9 @@
 
     /* ─── INIT ─── */
     async function init() {
-      // 1. بناء عناصر الواجهة فوراً
-      try {
-        buildDayTabs();
-        populateSections();
-      } catch (e) {
-        console.error("خطأ أثناء بناء عناصر الواجهة:", e);
-      }
+      buildDayTabs();
+      populateSections();
 
-      // 2. التحقق الآمن من مستخدم Supabase
       if (supabaseClient) {
         try {
           const { data: { session }, error } = await supabaseClient.auth.getSession();
@@ -554,23 +549,73 @@
                 <a href="#" class="dropdown-item" onclick="signOut(event)">🚪 تسجيل الخروج</a>
               `;
             }
+            
+            // جلب كامل البيانات المخزنة في السحاب للحساب المفتوح
+            await fetchTasksFromCloud();
           }
         } catch (e) {
-          console.warn("لم يتم الاتصال بـ Supabase، تم الاعتماد على التخزين المحلي:", e);
+          console.warn("استخدام النمط المحلي المستقر", e);
         }
       }
 
-      // 3. عرض المهام
-      try {
-        renderTasks();
-      } catch (e) {
-        console.error("خطأ أثناء عرض المهام:", e);
-      }
+      renderTasks();
 
       window.addEventListener('click', () => {
         const m = document.getElementById('dropdown-menu');
         if (m) m.classList.remove('show');
       });
+    }
+
+    // جلب البيانات من السحاب وإعادة ترتيبها للمتصفح الحالي
+    async function fetchTasksFromCloud() {
+      if (!currentUser) return;
+      try {
+        const { data: cloudData, error } = await supabaseClient
+          .from('tasks')
+          .select('*')
+          .eq('user_id', currentUser.id);
+
+        if (!error && cloudData) {
+          const formattedData = {};
+          cloudData.forEach(item => {
+            const key = 'day_' + item.day_id;
+            if (!formattedData[key]) formattedData[key] = [];
+            formattedData[key].push({
+              id: item.id,
+              text: item.text,
+              section: item.section,
+              status: item.status,
+              reason: item.reason || ''
+            });
+          });
+          data = formattedData;
+          localStorage.setItem('glow_data', JSON.stringify(data));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // رفع أي تحديث فوري يحدث (إضافة، تعديل، حذف) لـ Supabase
+    async function pushTaskToCloud(task, operation = 'upsert') {
+      if (!currentUser) return;
+      try {
+        if (operation === 'delete') {
+          await supabaseClient.from('tasks').delete().eq('id', task.id);
+        } else {
+          await supabaseClient.from('tasks').upsert({
+            id: task.id,
+            user_id: currentUser.id,
+            day_id: currentDay,
+            text: task.text,
+            section: task.section,
+            status: task.status,
+            reason: task.reason || ''
+          });
+        }
+      } catch (err) {
+        console.error("عطل مؤقت في المزامنة:", err);
+      }
     }
 
     function toggleDropdown(event) {
@@ -634,7 +679,7 @@
       localStorage.setItem('glow_data', JSON.stringify(data));
     }
 
-    function addTask() {
+    async function addTask() {
       const input = document.getElementById('task-input');
       const sec = document.getElementById('section-select');
       const text = input.value.trim();
@@ -643,8 +688,13 @@
       if (!text) { showToast('✏️ اكتبي المهمة أولاً'); return; }
       
       const tasks = getTasks();
-      tasks.push({ id: Date.now(), text, section, status: 'pending', reason: '' });
+      const newTask = { id: Math.floor(Math.random() * 100000000), text, section, status: 'pending', reason: '' };
+      
+      tasks.push(newTask);
       saveTasks(tasks);
+      
+      await pushTaskToCloud(newTask, 'upsert');
+      
       input.value = '';
       renderTasks();
       showToast('✅ تمت إضافة المهمة');
@@ -689,12 +739,12 @@
               <button class="btn-missed" title="ما سويته" onclick="setStatus(${task.id},'missed')">✗</button>
               <button class="btn-delete" title="حذف" onclick="deleteTask(${task.id})">🗑</button>
             </div>
-            ${task.status === 'missed' ? `
+            \${task.status === 'missed' ? \`
               <div class="reason-box" style="width:100%">
-                <div>💭 ليه :</div>
-                <textarea class="reason-input" placeholder="اكتبي السبب هنا..." onchange="saveReason(${task.id},this.value)">${escHtml(task.reason)}</textarea>
-                <button class="reason-save" onclick="saveReason(${task.id},this.previousElementSibling.value)">حفظ السبب</button>
-              </div>` : ''}
+                <div>💭 ليه ما سويتيه اليوم؟</div>
+                <textarea class="reason-input" id="reason-text-\${task.id}" placeholder="اكتبي السبب هنا... ">\${escHtml(task.reason || '')}</textarea>
+                <button class="reason-save" onclick="saveReason(\&quot;\${task.id}\&quot;)">حفظ السبب</button>
+              </div>\` : ''}
           `;
           el.style.flexWrap = 'wrap';
           g.appendChild(el);
@@ -707,28 +757,40 @@
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    function setStatus(id, status) {
+    async function setStatus(id, status) {
       const tasks = getTasks();
       const t = tasks.find(x => x.id === id);
       if (!t) return;
+      
       t.status = t.status === status ? 'pending' : status;
       if (t.status !== 'missed') t.reason = '';
+      
       saveTasks(tasks);
+      await pushTaskToCloud(t, 'upsert');
       renderTasks();
     }
 
-    function saveReason(id, val) {
+    async function saveReason(id) {
       const tasks = getTasks();
       const t = tasks.find(x => x.id === id);
+      const textVal = document.getElementById(`reason-text-${id}`).value.trim();
+      
       if (!t) return;
-      t.reason = val;
+      t.reason = textVal;
+      
       saveTasks(tasks);
-      showToast('💾 تم حفظ السبب');
+      await pushTaskToCloud(t, 'upsert');
+      showToast('💾 تم حفظ السبب سحابياً');
     }
 
-    function deleteTask(id) {
-      const tasks = getTasks().filter(x => x.id !== id);
-      saveTasks(tasks);
+    async function deleteTask(id) {
+      const tasks = getTasks();
+      const t = tasks.find(x => x.id === id);
+      if (t) {
+        await pushTaskToCloud(t, 'delete');
+      }
+      const filtered = tasks.filter(x => x.id !== id);
+      saveTasks(filtered);
       renderTasks();
       showToast('🗑 تم حذف المهمة');
     }
@@ -749,7 +811,7 @@
           notifActive = true;
           document.getElementById('notif-btn').classList.add('active');
           document.getElementById('notif-btn').innerHTML = '✅ التنبيهات مفعّلة';
-          new Notification('✨ تذكيرك اليومي!', { body: 'لا تنسي المهمه اليوم 💖', icon: '' });
+          new Notification('✨ تذكيرك اليومي!', { body: 'لا تنسي المهمه اليوم 💖' });
           showToast('🔔 تم تفعيل التنبيهات!');
         } else {
           showToast('⚠️ لم يتم السماح بالإشعارات');
@@ -770,11 +832,11 @@
       event.preventDefault();
       if (supabaseClient) {
         await supabaseClient.auth.signOut();
+        localStorage.removeItem('glow_data'); 
         window.location.reload();
       }
     }
 
-    // انطلاق التطبيق عند تحميل الصفحة
     window.onload = init;
   </script>
 </body>
